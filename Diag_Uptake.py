@@ -43,9 +43,12 @@ class Uptake:
 preftable = entity.preferences
 v = 0
 test = []
-for testchar in diag_test.values():    
-    for top_level_key, top_level_value in preftable.items():    
-        if "target" in top_level_value:
+prefkeys = [x for x in preftable.keys()]
+for prefval in prefkeys:
+    if "target" in preftable[prefval]:
+        for testchar in diag_test.values():
+            testlevel = testchar['level']
+            testattr = testchar['attribute']         
             """
             # Are we calculating patient or HCP utility?
             checktarget = top_level_value['target']
@@ -57,22 +60,30 @@ for testchar in diag_test.values():
                 if checkattr == testchar['attribute']:
                     v += testvalue * testlevel
             """
-        else:
-            topkey = top_level_key
-            for i in preftable[topkey].keys():
-                checklevel = i
-                testlevel = testchar['level']
-                if checklevel == testlevel:
-                    for second_level_key, second_level_value in top_level_value.items():
-                        checktarget = second_level_value['target']
-                        # Are we calculating patient or HCP utility?
-                        if checktarget == target:
-                            # What is the attribute being examined?
-                            checkattr = second_level_value['attribute']
-                            testattr = testchar['attribute']
-                            if checkattr == testattr:            
-                                print(checkattr)
-                            
+    else:
+        checkkey = preftable[prefval].keys()
+        for checklevel in checkkey:
+            checktarget = preftable[prefval][checklevel]['target']
+            if checktarget == target:
+                for testchar in diag_test.values():
+                    testattr = testchar['attribute']
+                    checkattr = preftable[prefval][checklevel]['attribute']
+                    print(checkattr)
+                    testlevel = testchar['level']
+                    print(testlevel)
+                    if checklevel == testlevel:
+                        print(testlevel)
+                        for second_level_key, second_level_value in top_level_value.items():
+                            checktarget = second_level_value['target']
+                            print(checktarget)
+                            # Are we calculating patient or HCP utility?
+                                # What is the attribute being examined?
+                                checkattr = second_level_value['attribute']
+                                
+                                print(target, testlevel, checklevel, checkattr, testattr)
+                                if checkattr == testattr:            
+                                    print(target, checkattr)
+                                
                             
                         
                         

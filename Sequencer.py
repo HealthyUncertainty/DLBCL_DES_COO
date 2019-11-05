@@ -29,15 +29,15 @@ num_entities = 50000
 inbook = load_workbook('InputParameters.xlsx')
 loadparams = LoadParameters(inbook)
 loadparams.getEstimates()
-loadparams.getCostcoeffs()
+#loadparams.getCostcoeffs()
 loadparams.getRegcoeffs()
 loadparams.getPrefcoeffs()
 loadparams.getTestchars()
 
 with open('estimates.pickle', 'rb') as f:
     Ptable = pickle.load(f)
-with open('costcoeffs.pickle', 'rb') as f:
-    Costcoeffs = pickle.load(f)
+#with open('costcoeffs.pickle', 'rb') as f:
+ #   Costcoeffs = pickle.load(f)
 with open('regcoeffs.pickle', 'rb') as f:
     Regcoeffs = pickle.load(f)
 with open('prefcoeffs.pickle', 'rb') as f:
