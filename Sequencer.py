@@ -29,15 +29,15 @@ num_entities = 50000
 inbook = load_workbook('InputParameters.xlsx')
 loadparams = LoadParameters(inbook)
 loadparams.getEstimates()
-loadparams.getCostcoeffs()
+#loadparams.getCostcoeffs()
 loadparams.getRegcoeffs()
 loadparams.getPrefcoeffs()
 loadparams.getTestchars()
 
 with open('estimates.pickle', 'rb') as f:
     Ptable = pickle.load(f)
-with open('costcoeffs.pickle', 'rb') as f:
-    Costcoeffs = pickle.load(f)
+#with open('costcoeffs.pickle', 'rb') as f:
+ #   Costcoeffs = pickle.load(f)
 with open('regcoeffs.pickle', 'rb') as f:
     Regcoeffs = pickle.load(f)
 with open('prefcoeffs.pickle', 'rb') as f:
@@ -109,13 +109,13 @@ for i in range(0, num_entities):
             uptake.GetUtility('HCP')
             uptake.Process(entity)
             
-        ### Advance the clock to next scheduled event (NatHist, Sysp, Recurrence, Death) ###
+        ### Advance the clock to next scheduled event (Diagnosis, Treatment, Recurrence, Death) ###
         from Glb_CheckTime import CheckTime
-        CheckTime(entity, estimates, natHist, QALY)
+        CheckTime(entity, params, natHist, QALY)
 
         ### Run next scheduled event/process according to state ###
     
-        #People with a participating dentist undergo regular screening appointments    
+        # Entities undergo some diagnostic testing 
         if entity.stateNum == 1.0:                
             from SysP_ScreenAppt import ScreenAppt
             screenappt = ScreenAppt(estimates, regcoeffs)            
