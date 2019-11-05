@@ -18,7 +18,15 @@ class MakeTest:
             level = param[3]
             value = float(param[4])
             if typeno == 1 and value == 1:
-                diag_test[name] = {'attribute': attribute, 'level': level}
+                diag_test[name] = {'type': typeno, 'attribute': attribute, 'level': level}
+            elif typeno == 1:
+                pass
             elif typeno == 0:
-                diag_test[name] = {'attribute': attribute, 'level': value}
+                diag_test[name] = {'type': typeno, 'attribute': attribute, 'level': value}
+            elif typeno == None:
+                diag_test[name] = {'type': 0, 'attribute': attribute, 'level': value}
+            elif level == None:
+                diag_test[name] = {'type': typeno, 'attribute': attribute, 'level': value}
+            else:
+                print("Invalid 'TypeNo' and/or 'Level' Please ensure that the 'TestChars' sheet in 'InputParameters.xlsx' is completed properly")
         return(diag_test)
