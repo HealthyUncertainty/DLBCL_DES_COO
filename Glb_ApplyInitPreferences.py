@@ -30,3 +30,5 @@ class ApplyInitPreferences:
                     preferences[top_level_key][second_level_key]['value'] = getrand(second_level_value['mean'], second_level_value['SE'])
 
         entity.preferences = preferences
+        entity.stateNum = 0.3
+        entity.currentState = "Test Preferences Applied"

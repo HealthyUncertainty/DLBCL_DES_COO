@@ -19,12 +19,9 @@ with open('deathf.pickle', 'rb') as f:
 
 class ApplyInitDemo:
     def __init__(self, params):
-    
         self._params = params
 
     def Process(self, entity):
-        # A function to apply the initial characteristics to each person"
-        
         # Starting age is sampled from normal distribution
         entity.startAge = self._params['Demo_startage']
         
@@ -35,8 +32,6 @@ class ApplyInitDemo:
         else:
             entity.sex = 'M'
         
-        # Smoking status: 1 = ever smoker, 0 = never smoker
-        # Alcohol use: 1 = heavy user, 0 = not heavy user
         makeCanhist = random.random()
         if makeCanhist < self._params['Demo_cancerhistory']:
             entity.Canhist = 1
@@ -44,12 +39,7 @@ class ApplyInitDemo:
             entity.Canhist = 0
 
         "Entities start asymptomatically, at t0"
-        entity.OPLStatus = 0
-        entity.hasCancer = 0
-        entity.diseaseDetectable = 0
-        entity.diseaseDetected = 0
-        entity.cancerDetected = 0
-        entity.utility.append(("Well", self._params.Util_Well.sample(), 0.0))
+        entity.utility.append(("Well", self._params['Util_Well'], 0.0))
         
         "Assign date of all-cause death"
         if entity.sex == 'F':  
@@ -64,18 +54,4 @@ class ApplyInitDemo:
         entity.currentState = "Demographic Characteristics Applied"
         entity.stateNum = 0.1
 
-
 ####################################################
-# VARIABLES CREATED IN THIS STEP:
-#
-#   startAge - the entity's age at the beginning of the model
-#   sex - the entity's binary sex (1: female; 0: male)
-#   smokeStatus - whether the entity is a never or ever smoker (1: ever; 0: never)
-#   alcStatus - whether or not the entity is a heavy alcohol user (1: yes; 0: no)
-#   OPLStatus - whether or not the entity has an active OPL (1: yes; 0: no)
-#   hasDentist - whether or not the entity has a dentist who performs screening tests (1: yes; 0: no)
-#   hasCancer - whether or not the entity has an active cancer (1: yes; 0: no)
-#   diseaseDetected - whether or not the entity has a premalignancy or a cancer that has been detected (1: yes; 0: no)
-#   cancerDetected - whether or not the entity has a cancer that has been detected (1: yes; 0: no)
-#   natHist_deathAge - the age at which the entity will die of natural causes
-#   probOPL - the probability that the entity starts the simulation with a premalignancy
