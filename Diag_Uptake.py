@@ -14,53 +14,104 @@ class Uptake:
         self.utility = {}
     
     def GetUtility(self, target):
-        # Calculate the estimated utility that a patient or an HCP derives from using the test
+        # The marginal utility of testing starts at zero
         v = 0
-        for testkey, testchar in self._diagtest.items():
-            testattr = testchar['attribute']
-            testlevel = testchar['level']
-            testtype = testchar['type']
-            for prefkey, prefvals in self.preftable.items():
-                checkattr = prefvals['attribute']
-                checktarget = prefvals['target']
-                # Are we calculating utility among patients or HCPs?
-                if checktarget == target:
-                    # For which attribute?
-                    if checkattr == testattr:
-                        # Continuous values
-                        if testtype == 0:
-                            # Utility = test attribute level * marginal preference for attribute
-                            v += prefvals['value'] * testlevel
-                        # Categorical values
-                        else:
-                            # What attribute level does the test have?
-                            for checklevel, pref in prefvals.items():
-                                # Utility = marginal preference for that attribute/level
-                                if checklevel == testlevel:
-                                    v += pref['value']
-                                    
+        # Loop through parameters in the preference table
+        for param in self.preftable.keys():
+            # Are we calculating patient or HCP utility?
+            if param['target'] == target:
+                # Identify values for all coefficients
+                for attribute in self._diagtest.keys():
+                    if param['vartype'] == 2:
+                        v += param['mean'] * self._diagtest[attribute]['level']
+                    else:
+                        level = self._diagtest[attribute]['level']
+                        v += param[attribute][level]['mean']
         self.utility[target] = {'utility': v}
         
     def Process(self, entity):
-        # Will the patient and/or the HCP take up the new test?
         entity.uptake = {}
         for target in self.utility.keys():
-            # Draw a random probability
             randprob = random.random()
-            # Calculate probability of uptake
             prefprob = math.exp(self.utility[target]['utility'])/(1 + math.exp(self.utility[target]['utility']))
-            # Is the uptake probability greater than the random probability?
-            if prefprob > randprob:
-                entity.uptake[target] = 'Yes'
+            if randprob < prefprob:
+                entity.uptake[target] = {'uptake': 'Yes'}
             else:
-                entity.uptake[target] = 'No'
-        # Will the patient receive the test?
-        if entity.uptake['patient'] == 'Yes':
-            if entity.uptake['HCP'] == 'Yes':
-                entity.uptake['GetsTest'] = 'Yes'
-            else: entity.uptake['GetsTest'] = 'No'
+                entity.uptake[target] = {'uptake': 'No'}
+                
+                
+preftable = entity.preferences
+v = 0
+test = []
+for testchar in diag_test.values():    
+    for top_level_key, top_level_value in preftable.items():    
+        if "target" in top_level_value:
+            """
+            # Are we calculating patient or HCP utility?
+            checktarget = top_level_value['target']
+            if checktarget == target:
+                checkattr = top_level_value['attribute']
+                testlevel = testchar['level']
+                testvalue = top_level_value['value']
+                # Multiply the test attribute levels by the preference for that level (continuous variable)
+                if checkattr == testchar['attribute']:
+                    v += testvalue * testlevel
+            """
         else:
-            entity.uptake['GetsTest'] = 'No'
-        
-        entity.stateNum = 1.0
-        entity.currentState = "1.0 - Undergoing diagnostic testing"
+            topkey = top_level_key
+            for i in preftable[topkey].keys():
+                checklevel = i
+                testlevel = testchar['level']
+                if checklevel == testlevel:
+                    for second_level_key, second_level_value in top_level_value.items():
+                        checktarget = second_level_value['target']
+                        # Are we calculating patient or HCP utility?
+                        if checktarget == target:
+                            # What is the attribute being examined?
+                            checkattr = second_level_value['attribute']
+                            testattr = testchar['attribute']
+                            if checkattr == testattr:            
+                                print(checkattr)
+                            
+                            
+                        
+                        
+                        varlevel = i
+                        print(varlevel)
+                        if checkattr == testchar['attribute']:
+                            print(varvalue)
+                    if i == checklevel:
+                        print(i)
+                for second_level_key, second_level_value in top_level_value.items():
+                    for param, testchar in diag_test.items():
+                        
+                
+                
+                    
+
+                                test.append(varvalue)
+
+                # What level does the test have for each (categorical) attribute?
+
+                        
+                        # Apply the estimated utility for 
+                        
+                        print(checkattr)
+                        :
+                            if  == checkattr:
+                                print(i)    
+                        
+                        
+                        
+                                v += varvalue
+                                test.append(testchar['attribute'])
+        if preftable[param][attribute]['target'] == target:
+            print('True')
+            # Identify values for all coefficients
+            for attribute in self._diagtest.keys():
+                if param['vartype'] == 2:
+                    v += param['mean'] * self._diagtest[attribute]['level']
+                else:
+                    level = self._diagtest[attribute]['level']
+                    v += param[attribute][level]['mean']
+self.utility[target] = {'utility': v}
