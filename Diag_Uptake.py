@@ -57,10 +57,10 @@ class Uptake:
         # Will the patient receive the test?
         if entity.uptake['patient'] == 'Yes':
             if entity.uptake['HCP'] == 'Yes':
-                entity.uptake['GetsTest'] = 'Yes'
-            else: entity.uptake['GetsTest'] = 'No'
+                entity.uptake['GetsNGS'] = 'Yes'
+            else: entity.uptake['GetsNGS'] = 'No'
         else:
-            entity.uptake['GetsTest'] = 'No'
+            entity.uptake['GetsNGS'] = 'No'
         
         entity.stateNum = 1.0
         entity.currentState = "1.0 - Undergoing diagnostic testing"

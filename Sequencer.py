@@ -53,6 +53,18 @@ maketest = MakeTest(Testchars)
 diag_test = maketest.Process()
 
 ################################
+# STEP 3 - DEFINE THE TESTING SEQUENCE AND SCENARIO
+
+# COO Subtype of interest: 'ABC', 'GCB'. 'Dhit', 'Undefined'
+Scenario_COO = 'ABC'
+# When does testing occur: 'firstline' or 'secondline'?
+Scenario_TestTiming = 'firstline'
+# 0 - no NGS testing offered; 1 - NGS testing offered
+Scenario_NGStest = 1
+# 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
+Scenario_TestSequencing = 0
+
+################################
 # STEP 3 - RUN THE SEQUENCER
 ResourceList = []
 EventsList = []
@@ -117,9 +129,33 @@ for i in range(0, num_entities):
     
         # Entities undergo some diagnostic testing 
         if entity.stateNum == 1.0:                
-            from SysP_ScreenAppt import ScreenAppt
-            screenappt = ScreenAppt(estimates, regcoeffs)            
-            screenappt.Process(entity)
+            from SysP_Diagnosis import Diagnosis
+            diag_firstline = Diagnosis(params)
+            if Scenario_TestTiming == 'firstline':
+                if entity.uptake['GetsNGS'] == 'No':
+                    # Entities that do not take up NGS tests get conventional test
+                    diag_firstline.Screentest(entity, 1)
+                elif Scenario_NGStest == 0:
+                    # Only perform conventional testing on this entity
+                    diag_firstline.Screentest(entity, 1)
+                elif Scenario_NGStest == 1:
+                    # Determine test sequence
+                    if Scenario_TestSequencing == 0:
+                        diag_firstline.Screentest(entity, 2)
+                    elif Scenario_TestSequencing == 1:
+                        diag_firstline.Screentest(entity, 1)
+                        diag_firstline.Screentest(entity, 2)
+                    elif Scenario_TestSequencing == 2:
+                        diag_firstline.Screentest(entity, 2)
+                        diag_firstline.Screentest(entity, 1)
+            else:
+                # Only perform conventional testing on this entity
+                diag_firstline.Screentest(entity, 1)               
+            # Determine entity's diagnosis based on their test results
+            diag_firstline.GetDiagnosis(entity)
+            
+        # Entities may receive companion diagnostics if they are ABC
+        
            
         #People with no dentist wait for disease event        
         if entity.stateNum == 1.8:

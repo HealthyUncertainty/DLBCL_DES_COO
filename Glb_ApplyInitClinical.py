@@ -24,7 +24,7 @@ class ApplyInitClinical:
         elif COOprob <= self.probGCB + self.probABC:
             entity.COO = 'ABC'
         elif COOprob <= self.probGCB + self.probABC + self.probUndef:
-            entity.COO = 'Undef'          
+            entity.COO = 'Undefined'          
         elif COOprob <= self.probGCB + self.probABC + self.probUndef + self.probDhit:
             entity.COO = 'Dhit'
             
