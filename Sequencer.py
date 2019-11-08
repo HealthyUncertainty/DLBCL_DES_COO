@@ -56,13 +56,21 @@ diag_test = maketest.Process()
 # STEP 3 - DEFINE THE TESTING SEQUENCE AND SCENARIO
 
 # COO Subtype of interest: 'ABC', 'GCB'. 'Dhit', 'Undefined'
-Scenario_COO = 'ABC'
+Scenario_COO_ABC = 1
+Scenario_COO_GCB = 0
+Scenario_COO_Dhit = 0
+Scenario_COO_Undef = 0
+Scenario_COO = {'ABC': Scenario_COO_ABC, 'GCB': Scenario_COO_GCB, 'Dhit': Scenario_COO_Dhit, 'Undef': Scenario_COO_Undef}
 # When does testing occur: 'firstline' or 'secondline'?
-Scenario_TestTiming = 'firstline'
-# 0 - no NGS testing offered; 1 - NGS testing offered
+Scenario_TestTiming_First = 1
+Scenario_TestTiming_Second = 0
+Scenario_TestTiming = {'FirstLine': Scenario_TestTiming_First, 'SecondLine': Scenario_TestTiming_Second}
+# Is an NGS test available: 0 - no NGS testing offered; 1 - NGS testing offered
 Scenario_NGStest = 1
-# 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
+# Diagnostic Testing sequence: 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
 Scenario_TestSequencing = 0
+# Companion diagnostic for COO of interest: 0 - no; 1 - yes
+Scenario_Companion = 1
 
 ################################
 # STEP 3 - RUN THE SEQUENCER
@@ -131,7 +139,8 @@ for i in range(0, num_entities):
         if entity.stateNum == 1.0:                
             from SysP_Diagnosis import Diagnosis
             diag_firstline = Diagnosis(params)
-            if Scenario_TestTiming == 'firstline':
+            # In what order does diagnostic testing occur?
+            if Scenario_TestTiming['FirstLine'] == 1:
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_firstline.Screentest(entity, 1)
@@ -154,7 +163,9 @@ for i in range(0, num_entities):
             # Determine entity's diagnosis based on their test results
             diag_firstline.GetDiagnosis(entity)
             
-        # Entities may receive companion diagnostics if they are ABC
+        # Entities may receive companion diagnostics if they have the COO of interest
+        if entity.stateNum == 1.5:
+            
         
            
         #People with no dentist wait for disease event        

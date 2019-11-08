@@ -43,6 +43,7 @@ class Diagnosis:
         # Sequence number determines which test is being performed
         misdiagnosis_conv = 0
         misdiagnosis_NGS = 0
+        entity.hadNGS = 0
         if seqno == 1:
             # Conventional testing
             entity.resources.append(('Conventional Diagnostic Test', entity.allTime))
@@ -60,6 +61,7 @@ class Diagnosis:
         elif seqno == 2:
             # NGS testing
             entity.resources.append(('NGS Diagnostic Test', entity.allTime))
+            entity.hadNGS = 1
             self.NGStest = 1
             # Compare positive test to sensitivity
             if self.screenpos > self.Sens_NGS:
