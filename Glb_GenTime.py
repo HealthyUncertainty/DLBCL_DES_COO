@@ -77,24 +77,40 @@ class GenTime:
         if scenario[3] == 1:
             COOlist.append('Undef')
         
-        # Estimate entity's survival
+        # Does the entity have an eligible subtype?
+        eligible = 0
+        if entity.COO_diag in COOlist:
+            # If the entity has an eligible subtype and got an NGS test, then they get treatment
+            if entity.hadNGS == 1:
+                eligible = 1
+                
+        # Estimate entity's survival parameters
         survdict = {}
         for param, coeffs in self.TTE.items():
             Intercept = self.TTE[param]['const']
             Sigma = self.TTE[param]['shape']
             survdict[param] = {'Intercept': Intercept, 'Sigma': Sigma}
-        
-        CRtoDeath = survdict['Tx']
-        
-        if entity.COO in 
-            # The sum of the coefficients starts at zero
-            coeff = 0
+
+        CRtoDeath = survdict['Tx_Tprob_CRtoDeath']
+        CRtoFail = survdict['Tx_Tprob_CRtoFail']
+        FailtoDeath = survdict['Tx_Tprob_FailtoDeath']
             
+        # Will the entity receive an experimental treatment?
+        if eligible == 1:
+            # Is this the first or second line of treatment?
+            secondline = 0
+            if entity.recurrence = 1:
+                secondline = 1
+            # What is the hazard rate associated with the experimental treatment?
+            if secondline == 0:
+                # Hazard ratio from first line of treatment
+                CRtoFail['Sigma'] += entity.params['Tx_HR_newTx_firstline']
+            else:
+                # Hazard ratio from second line of treatment
+                FailtoDeath['Sigma'] += entity.params['Tx_HR_newTx_secondline']
+        
 
 
-            # For each factor (COO) of a parameter within the Excel sheet
-            for factor in self._regcoeffs[param].keys():
-                # Identify the intercept
 
                 
             # Produce an estimate of time from the regression
