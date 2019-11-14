@@ -45,19 +45,18 @@ class LoadParameters:
         
         "Create a multi-level dictionary to hold each parameter from the regression model:"            
         config = {}         # creates the blank dictionary
-        for param, factor, vartype, level, mean, SE in source:
+        for param, group, factor, vartype, mean, SE in source:
             SE = SE if SE else 0    # If SE is blank, enter zero
             vartype = vartype if vartype else 0
             mean = mean if mean not in ("ref", None) else 0     # Reference category = 0
             if param not in config:
                 config[param] = {}
-            
-            if level:
-                if factor not in config[param]:
-                    config[param][factor] = {"vartype": vartype}
-                config[param][factor][level] = {"mean": mean, "SE": SE}
-            else:
-                config[param][factor] = {"vartype": vartype, "mean": mean, "SE": SE}
+            if group not in config[param]:
+                    config[param][group] = {}
+            if factor not in config[param][group]:
+                config[param][group][factor] = {}
+            if vartype not in config[param][group][factor]:
+                config[param][group][factor][vartype] = {"mean": mean, "SE": SE}
         
         with open('regcoeffs.pickle', 'wb') as regcoeffs:
             pickle.dump(config, regcoeffs, pickle.HIGHEST_PROTOCOL)

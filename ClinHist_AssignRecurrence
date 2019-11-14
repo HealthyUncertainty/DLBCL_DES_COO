@@ -1,0 +1,52 @@
+"""
+A program to provide an entity with a recurrence date following successful treatment. Their time to recurrence will
+be drawn from the appropriate values in 'Regcoeffs'.
+
+@author: icromwell
+"""
+
+import random
+
+class AssignRecurrence:
+    def __init__(self, params, regcoeffs):
+        self._params = params
+        self._regcoeffs = regcoeffs
+
+    def Process(self, entity):
+        # Assign placeholder values to time to recurrence, death from cancer
+        entity.time_Recurrence = 99999
+        entity.time_DeadofDisease = 99999
+
+        start = entity.allTime
+        entity.syspTime = entity.allTime
+
+        # Schedule next event
+        # Generate random time to event - either recurrence or death
+        makeEvent = CompTime(self._estimates, self._regcoeffs)
+        nextEvent = makeEvent.Process(entity, 'FirstEvent', 'FirstEvent_death')
+
+        if nextEvent[0] < 3650:  # Entity experiences some event between 3 months and 10 years
+            "Schedule next event"
+
+            if nextEvent[1] == 1:  # Event is recurrence
+                entity.time_Recurrence = start + nextEvent[0]
+            elif nextEvent[1] == 2:  # Event is death
+                entity.time_DeadofDisease = start + nextEvent[0]
+
+            # If death or recurrence occurs before 3 months, schedule at that time
+            if nextEvent[0] < 90:
+                if nextEvent[1] == 1:  # Entity dies before 90 days
+                    entity.stateNum = 6.0  # Entity is in EoL care state
+                    entity.currentState = "Terminal Disease"
+                    entity.utility.append((self._params['Util_EoL'], entity.allTime))
+                    entity.endOfLife = 1
+                entity.syspTime += nextEvent[0]
+            else:
+                entity.stateNum = 4.0
+                entity.currentState = "Post-treatment follow-up"
+                entity.utility.append((self._params['Util_FollowUp'], entity.allTime))
+
+        else:  # Entity does not experience another disease event
+            entity.stateNum = 4.0
+            entity.currentState = "Post-treatment follow-up"
+            entity.utility.append((self._params['Util_FollowUp'], entity.allTime))

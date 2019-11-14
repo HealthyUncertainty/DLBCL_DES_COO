@@ -38,7 +38,7 @@ class Uptake:
                                 # Utility = marginal preference for that attribute/level
                                 if checklevel == testlevel:
                                     v += pref['value']
-                                    
+
         self.utility[target] = {'utility': v}
         
     def Process(self, entity):
