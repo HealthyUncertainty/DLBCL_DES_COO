@@ -103,16 +103,13 @@ class GenTime:
                 secondline = 1
             # What is the hazard rate associated with the experimental treatment?
             if secondline == 0:
-                # Hazard ratio from first line of treatment
+                # Adjust time to recurrence using hazard ratio from first line of treatment
                 CRtoFail['Sigma'] += entity.params['Tx_HR_newTx_firstline']
             else:
-                # Hazard ratio from second line of treatment
+                # Adjust post-recurrence survival using hazard ratio from second line of treatment
                 FailtoDeath['Sigma'] += entity.params['Tx_HR_newTx_secondline']
         
-
-
-
-                
+        
             # Produce an estimate of time from the regression
             mu = Intercept + coeff         
             shape = 1/Sigma
