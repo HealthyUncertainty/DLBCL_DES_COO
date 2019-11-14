@@ -56,13 +56,18 @@ diag_test = maketest.Process()
 # STEP 3 - DEFINE THE TESTING SEQUENCE AND SCENARIO
 
 # COO Subtype of interest: 'ABC', 'GCB'. 'Dhit', 'Undefined'
-Scenario_COO = 'ABC'
+Scenario_COO_ABC = 1
+Scenario_COO_Dhit = 0
+Scenario_COO_GCB = 0
+Scenario_COO_Undef = 0
 # When does testing occur: 'firstline' or 'secondline'?
 Scenario_TestTiming = 'firstline'
 # 0 - no NGS testing offered; 1 - NGS testing offered
 Scenario_NGStest = 1
 # 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
 Scenario_TestSequencing = 0
+# Age group of interest: 0 - general population; 1 - under 60; 2 - 60+ 
+Scenario_AgeCohort = 0
 
 ################################
 # STEP 3 - RUN THE SEQUENCER
@@ -70,12 +75,12 @@ ResourceList = []
 EventsList = []
 QALYList = []
 EntityList = []
+Scenario_COO = (Scenario_COO_ABC, Scenario_COO_Dhit, Scenario_COO_GCB, Scenario_COO_Undef)
 
 looptime_start = time.time()
 for i in range(0, num_entities):
-
-    entity_num = 'entity' + str(i + 1)                  # Create an entity for each iteration of the model
     
+    entity_num = 'entity' + str(i + 1)                  # Create an entity for each iteration of the model
     from Glb_CreateEntity import Entity
     entity = Entity()
     #print("Entity %2.0f is created"%(i+1))
