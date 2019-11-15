@@ -165,11 +165,12 @@ for i in range(0, num_entities):
             companion = CompanionDiagnostic(entity.params)
             companion.Process(entity, Scenario_Companion, Scenario_COO)
            
-        # People receive a prescribed course of treatment 
+        # People receive a prescribed course of treatment
         if entity.stateNum == 2.0:
-            from SysP_OPLmanage import OPLManage
-            oplmanage = OPLManage(estimates, regcoeffs)            
-            oplmanage.Process(entity) 
+            from Glb_GenTime import GenTime
+            from SysP_ClinicalPrescription import ClinicalPrescription
+            prescription = ClinicalPrescription(entity.params, entity.regcoeffs)
+            prescription.Process(entity)
         
         #People with a diagnosed cancer undergo treatment
         if entity.stateNum == 3.0:
@@ -211,9 +212,9 @@ for i in range(0, num_entities):
                         diag_secondline.Screentest(entity, 1)
             else:
                 # Only perform conventional testing on this entity
-                diag_firstline.Screentest(entity, 1)               
+                diag_secondline.Screentest(entity, 1)               
             # Determine entity's diagnosis based on their test results
-            diag_firstline.GetDiagnosis(entity)
+            diag_secondline.GetDiagnosis(entity)
 
         # People with diagnosed recurrence undergo treatment
         if entity.stateNum == 6.0:
