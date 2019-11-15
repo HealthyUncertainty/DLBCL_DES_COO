@@ -159,20 +159,19 @@ for i in range(0, num_entities):
             # Determine entity's diagnosis based on their test results
             diag_firstline.GetDiagnosis(entity)
             
-        # Entities may receive companion diagnostics if they are ABC
-        
+        # Entities may receive companion diagnostics if they have the COO of interest
+        if entity.stateNum == 1.5:
+            from SysP_CompanionDiagnostic import CompanionDiagnostic
+            companion = CompanionDiagnostic(entity.params)
+            companion.Process(entity, Scenario_Companion, Scenario_COO)
            
-        #People with no dentist wait for disease event        
-        if entity.stateNum == 1.8:
-            entity.time_Sysp += 1000      #Move system process clock forward by 1000 days (See footnote 1)
-                
-        #People with a detected premalignancy undergo regular follow-up        
+        # People receive a prescribed course of treatment 
         if entity.stateNum == 2.0:
             from SysP_OPLmanage import OPLManage
             oplmanage = OPLManage(estimates, regcoeffs)            
             oplmanage.Process(entity) 
         
-        #People with a detected cancer undergo treatment       
+        #People with a diagnosed cancer undergo treatment
         if entity.stateNum == 3.0:
             from SysP_IncidentCancer import IncidentCancer
             incidentcancer = IncidentCancer(estimates, regcoeffs)
@@ -189,8 +188,35 @@ for i in range(0, num_entities):
             #entity is in remission, no further events occur
             entity.allTime = entity.natHist_deathAge + 0.0001
              
-        #People with terminal disease receive palliative care     
+        # People with recurrence undergo additional diagnostic work
         if entity.stateNum == 5.0:
+            diag_secondline = Diagnosis(params)
+            # In what order does diagnostic testing occur?
+            if Scenario_TestTiming['SecondLine'] == 1:
+                if entity.uptake['GetsNGS'] == 'No':
+                    # Entities that do not take up NGS tests get conventional test
+                    diag_secondline.Screentest(entity, 1)
+                elif Scenario_NGStest == 0:
+                    # Only perform conventional testing on this entity
+                    diag_secondline.Screentest(entity, 1)
+                elif Scenario_NGStest == 1:
+                    # Determine test sequence
+                    if Scenario_TestSequencing == 0:
+                        diag_secondline.Screentest(entity, 2)
+                    elif Scenario_TestSequencing == 1:
+                        diag_secondline.Screentest(entity, 1)
+                        diag_secondline.Screentest(entity, 2)
+                    elif Scenario_TestSequencing == 2:
+                        diag_secondline.Screentest(entity, 2)
+                        diag_secondline.Screentest(entity, 1)
+            else:
+                # Only perform conventional testing on this entity
+                diag_firstline.Screentest(entity, 1)               
+            # Determine entity's diagnosis based on their test results
+            diag_firstline.GetDiagnosis(entity)
+
+        # People with diagnosed recurrence undergo treatment
+        if entity.stateNum == 6.0:
             from SysP_Terminal import Terminal
             terminal = Terminal(estimates, regcoeffs)
             terminal.Process(entity)
