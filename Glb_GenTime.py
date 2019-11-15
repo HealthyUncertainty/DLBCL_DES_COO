@@ -108,27 +108,23 @@ class GenTime:
             else:
                 # Adjust post-recurrence survival using hazard ratio from second line of treatment
                 FailtoDeath['Sigma'] += entity.params['Tx_HR_newTx_secondline']
-        
-        
-            # Produce an estimate of time from the regression
-            mu = Intercept + coeff         
-            shape = 1/Sigma
-            scale = math.exp(mu)
-            
-            self.mu = mu
-            self.shape = shape
-            self.scale = scale
+
+        # Calculate the shape and scale parameters of the Weibull curve
+        shape = 1/Sigma
+        scale = math.exp(Intercept + coeff)
+        self.shape = shape
+        self.scale = scale
             
         else:
             entity.stateNum = 99
-            entity.currentState = "Error - tried to produce a time estimate for a variable that does not exist"
+            entity.currentState = "Error - something happened in 'Glb_GenTime.py' - check the entity's COO_diag"
             
     # Randomly sample an event time for the entity from a Weibull distribution            
-    def estTime(self):                 
+    def estTimeSurv(self):
         estimate_time = numpy.random.weibull(self.shape)*self.scale
         return estimate_time
 
     # Estimate the probability (CDF) of being alive at a given time
-    def estProb(self, time):
+    def estProbSurv(self, time):
         estimate_probability = numpy.math.exp(-(time/self.scale)**self.shape)
         return estimate_probability
