@@ -23,7 +23,7 @@ class ApplyInitDemo:
 
     def Process(self, entity):
         # Starting age is sampled from normal distribution
-        entity.startAge = self._params['Demo_startage']
+        entity.startAge = self._params['Demo_StartAge']
         
         # Sex: 1 = female, 0 = male
         makeSex = random.random()
@@ -33,7 +33,7 @@ class ApplyInitDemo:
             entity.sex = 'M'
         
         makeCanhist = random.random()
-        if makeCanhist < self._params['Demo_cancerhistory']:
+        if makeCanhist < self._params['Demo_CancerHistory']:
             entity.Canhist = 1
         else:
             entity.Canhist = 0
@@ -50,7 +50,6 @@ class ApplyInitDemo:
         entity.natHist_deathAge = abs(nh_deathspan)*365        # Convert years to days
 
         "Update state"
-        
         entity.currentState = "Demographic Characteristics Applied"
         entity.stateNum = 0.1
 

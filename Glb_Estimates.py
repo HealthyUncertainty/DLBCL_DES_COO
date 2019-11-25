@@ -15,10 +15,11 @@ Variable Type:
     3 - Weibull distributed (value between 0 and infinity)
     4 - Gamma distributed (value between 0 and infinity)
     5 - Dirichlet distributed (create >2 probabilities that sum to 1.0 based on counts)
-    6 - Log odds (import probability, convert to probability based on log-odds)
+    6 - Log Hazard Ratio
     7 - Exponential distribution (transition probability)
     8 - Beta distribution where values lie close to 1.0 or 0.0 (direct parameters)
     9 - Static value (i.e., does not vary)
+    10 - Log Odds (convert to probability)
     
 Dirichlet-distributed variables must be 
     
@@ -76,8 +77,7 @@ class Estimate:                                     # A class to process the dat
         elif self.type == 6:
             x = self.mean
             y = self.se
-            sampodds = numpy.random.normal(x, y)        # Randomly sample the log odds based on normally-distributed standard error
-            samp_value = math.exp(sampodds)/(1 + math.exp(sampodds))    # Convert odds back to probability
+            samp_value = math.exp(numpy.random.normal(x, y))
             return samp_value
             
         elif self.type == 7:
@@ -107,9 +107,15 @@ class Estimate:                                     # A class to process the dat
             samp_value = self.mean
             return samp_value
             
+        elif self.type == 10:
+            x = self.mean
+            y = self.se
+            sampodds = numpy.random.normal(x, y)        # Randomly sample the log odds based on normally-distributed standard error
+            samp_value = math.exp(sampodds)/(1 + math.exp(sampodds))    # Convert odds back to probability
+            return samp_value
+            
         else:
             print("Please specify a variable type in the input table")
-
 
     def __str__(self):
         return "<Estimate: %s, %s, %s, %s>" % (self.type, self.varnum, self.mean, self.se)

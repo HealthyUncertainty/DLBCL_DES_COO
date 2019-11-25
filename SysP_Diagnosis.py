@@ -29,10 +29,10 @@ import random
 class Diagnosis:
     def __init__(self, params):
         self._params = params
-        self.Sens_conv = params.Diag_sensitivity_conventional
-        self.Spec_conv = params.Diag_specificity_conventional
-        self.Sens_NGS = params.Diag_sensitivity_NGS
-        self.Spec_NGS = params.Diag_specificity_NGS
+        self.Sens_conv = params['Diag_Sensitivity_Conventional']
+        self.Spec_conv = params['Diag_Specificity_Conventional']
+        self.Sens_NGS = params['Diag_Sensitivity_NGS']
+        self.Spec_NGS = params['Diag_Specificity_NGS']
         self.screenpos = random.random()
         self.screenneg = random.random()
         self.misdiagnosis = []
@@ -88,13 +88,13 @@ class Diagnosis:
         if self.NGStest == 1:
             if 'NGS' in self.misdiagnosis:
                 # NGS misclassifies COO - 'Undefined'
-                entity.COO_diag = 'Undefined'
+                entity.COO_diag = 'Undef'
                 entity.COO_misclassified = 1
                 entity.COO_misclassified_NGS = 1
             else:
                 entity.COO_diag = entity.COO
             # Undefined on NGS
-            if entity.COO_diag == 'Undefined':
+            if entity.COO_diag == 'Undef':
                 # Received conventional testing?
                 if self.convtest == 1:
                     # Conventional testing also misclassifies ABC subtype

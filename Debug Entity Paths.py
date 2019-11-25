@@ -1,184 +1,189 @@
 # -*- coding: utf-8 -*-
 """
-This is just a program that makes it easier to debug entity progress by creating new entities one at
-a time independently from the sequencer
+The Sequencer is the master file for the model. It creates entities and runs them through the model based
+on their current model state, characteristics, history, and underlying probabilistic distrubtions of the 
+model parameters.
+
+The sequencer will run "num_entities" entities through the model and output the resources and events experienced
+by each entity as a series of lists.
 
 @author: icromwell
 """
-
 ############################################################################################
-# Load some necessary packages and functions"
+############################################################################################
+# LOAD SOME NECESSARY PACKAGES AND FUNCTIONS
 
 import time
 import pickle
 from openpyxl import load_workbook                  # Load the import function
 import numpy
-
-# Import Parameter Estimates from the table"
-
-from Glb_Estimates import Estimates
-from Glb_Estimates import Estimate
-
-inbook = load_workbook('InputParameters.xlsx')
-sheet = inbook["Inputs"]
-estimates = Estimates()
-
-for line in sheet.rows:
-    if not line[0].value:
-        # There's no estimate name in this row.
-        continue
-    setattr(estimates, line[0].value, Estimate(line[1].value, line[2].value, line[3].value))
-
-del(estimates.Parameter)
-
-with open('estimates.pickle', 'wb') as inputs:
-    pickle.dump(estimates, inputs, pickle.HIGHEST_PROTOCOL)
-    
-
-# Import Regression Coefficients from the table
-
-regsheet = inbook["RegCoeffs"]
-source = []                                           # A list to hold data
-
-"Convert the openpyxl object into a useable form"
-
-for row in regsheet.rows[1:]:
-    args = [cell.value for cell in row]
-    source.append(args)
-    
-for row in range(len(source)):
-    source[row][0] = str(source[row][0])
-    source[row][1] = str(source[row][1])
-
-"Create a multi-level dictionary to hold each parameter from the regression model:"
-    
-config = {}         # creates the blank dictionary
-for param, factor, vartype, level, mean, SE in source:
-    SE = SE if SE else 0    # If SE is blank, enter zero
-    vartype = vartype if vartype else 0
-    mean = mean if mean not in ("ref", None) else 0     # Reference category = 0
-    if param not in config:
-        config[param] = {}
-    
-    if level:
-        if factor not in config[param]:
-            config[param][factor] = {"vartype": vartype}
-        config[param][factor][level] = {"mean": mean, "SE": SE}
-    else:
-        config[param][factor] = {"vartype": vartype, "mean": mean, "SE": SE}
-
-with open('regcoeffs.pickle', 'wb') as regcoeffs:
-    pickle.dump(config, regcoeffs, pickle.HIGHEST_PROTOCOL)
+from Glb_LoadParameters import LoadParameters
 
 #############################################################################################
+################################
+# STEP 1 - SET UP THE SEQUENCER
+"Define the number of entities you want to model"
+num_entities = 50000
 
-ResourceList = []
-EventsList = []
-UtilitiesList = []
-QALY = []
+"Load the data from the Excel spreadsheet"
+inbook = load_workbook('InputParameters.xlsx')
+loadparams = LoadParameters(inbook)
+loadparams.getEstimates()
+#loadparams.getCostcoeffs()
+loadparams.getRegcoeffs()
+loadparams.getPrefcoeffs()
+loadparams.getTestchars()
 
 with open('estimates.pickle', 'rb') as f:
-    estimates = pickle.load(f)
-
+    Ptable = pickle.load(f)
+#with open('costcoeffs.pickle', 'rb') as f:
+ #   Costcoeffs = pickle.load(f)
 with open('regcoeffs.pickle', 'rb') as f:
-    regcoeffs = pickle.load(f)
+    Regcoeffs = pickle.load(f)
+with open('prefcoeffs.pickle', 'rb') as f:
+    Prefcoeffs = pickle.load(f)
+with open('testchars.pickle', 'rb') as f:
+    Testchars = pickle.load(f)
 
-from pprint import pprint
+################################
+# STEP 2 - CREATE A NEXT-GEN TEST BEING EVALUATED
+    
+from Diag_MakeTest import MakeTest
+maketest = MakeTest(Testchars)
+diag_test = maketest.Process()
 
+################################
+# STEP 3 - DEFINE THE TESTING SEQUENCE AND SCENARIO
+
+# COO Subtype of interest: 'ABC', 'GCB'. 'Dhit', 'Undefined'
+Scenario_COO_ABC = 1
+Scenario_COO_Dhit = 0
+Scenario_COO_GCB = 0
+Scenario_COO_Undef = 0
+# When does testing occur: 'firstline' or 'secondline'?
+Scenario_TestTiming = 'firstline'
+# 0 - no NGS testing offered; 1 - NGS testing offered
+Scenario_NGStest = 1
+# 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
+Scenario_TestSequencing = 0
+# Age group of interest: 0 - general population; 1 - under 60; 2 - 60+ 
+Scenario_AgeCohort = 0
+# Companion Diagnostic: 0 - No; 1 - Yes
+Scenario_Companion = 1
+
+################################
+# STEP 3 - RUN THE SEQUENCER
+ResourceList = []
+EventsList = []
+QALYList = []
+EntityList = []
+Scenario_COO = {'ABC': Scenario_COO_ABC, 'Dhit': Scenario_COO_Dhit, 'GCB': Scenario_COO_GCB, 'Undef': Scenario_COO_Undef}
+
+"""
+with open('entityABC.pickle', 'rb') as f:
+    entity = pickle.load(f)
+    params = entity.params
+
+from Glb_CreateEntity import Entity
+entity = Entity()
+
+"Sample parameter values for entity"
+from Glb_MakeEstimates import MakeEstimates
+entity_estimates = MakeEstimates(Ptable)
+entity_estimates.Process(entity)
+params = entity.params
+
+"""
+  
+"Create resource table"
 resources = []
 events = []
 natHist = []
-QALYList = []
+QALY = []
 
-from Glb_CreateEntity import Entity
-from Glb_ApplyInit import ApplyInit
-from Glb_CancerFlags import CancerFlags
+# Apply Demographic Characteristics to a newly-created entity
+if entity.stateNum == 0.0:
+    from Glb_ApplyInitDemo import ApplyInitDemo
+    applydemo = ApplyInitDemo(params)
+    applydemo.Process(entity)
 
-
-entity = Entity()
-applyinit = ApplyInit(estimates)
-applyinit.Process(entity)
-
-
-
-from NatHist_OralCancer import NatHistOCa
-nathist = NatHistOCa(estimates, regcoeffs)
-nathist.Process(entity, natHist)
-entity.OPLStatus = 1
-entity.nh_status = 1.0
-entity.stateNum = 1.0
-
-
-# Load a pickled entity instead of drawing a new one:
-    # Dead of undetected stage IV:
-"""
-with open('entity_undetIV.pickle', 'rb') as f:
-    entity = pickle.load(f)
-    entity.time_Sysp = 0
-    natHist.append(entity.natHist)
-    natHistAr = numpy.asarray(entity.natHist)                     
-    numpy.save('natHistAr', natHistAr)                            
-"""
-# Spontaneously resolving OPL:
-"""
-with open('entity_NED.pickle', 'rb') as f:
-    entity = pickle.load(f)
-    entity.time_Sysp = 0
-    natHist.append(entity.natHist)
-    natHistAr = numpy.asarray(entity.natHist)                     
-    numpy.save('natHistAr', natHistAr)                            
-"""
-# Symptomatic detection:
-"""
-with open('entity_sympt.pickle', 'rb') as f:
-    entity = pickle.load(f)
-    entity.time_Sysp = 0
-    natHist.append(entity.natHist)
-    natHistAr = numpy.asarray(entity.natHist)                     
-    numpy.save('natHistAr', natHistAr)                            
-"""
-# Detected and treated cancer:
-"""    
-with open('entity_hascancer.pickle', 'rb') as f:
-    entity = pickle.load(f)
-"""      
-
-            
+# Apply Clinical Characteristics to a newly-created entity
 if entity.stateNum == 0.1:
-    if entity.hasDentist == 1:
-        entity.stateNum = 1.0
-        entity.currentState = "1.0 - Undergoing regular dental screening"
-    elif entity.hasDentist == 0:
-        entity.stateNum = 1.8
-        entity.currentState = "1.8 - No access to dentist"
-    else:
-        print("The entity has not been assigned a value for 'hasDentist'. The simulation must terminate")
-        entity.stateNum = 0.9
+    from Glb_ApplyInitClinical import ApplyInitClinical
+    applyclin = ApplyInitClinical(params)
+    applyclin.Process(entity)
+    # Just for debugging purposes
+    entity.COO = 'ABC'
     
-### Advance the clock to next scheduled event (NatHist, Sysp, Recurrence, Death) ###
-
+# Apply preference estimates to a newly-created entity
+if entity.stateNum == 0.2:
+    from Glb_ApplyInitPreferences import ApplyInitPreferences
+    applypref = ApplyInitPreferences(Prefcoeffs)
+    applypref.Process(entity)
+    
+# Determine diagnostic pathway from patient and provider preferences
+if entity.stateNum == 0.3:
+    from Diag_Uptake import Uptake
+    uptake = Uptake(diag_test, entity)
+    uptake.GetUtility('patient')
+    uptake.GetUtility('HCP')
+    uptake.Process(entity)
+    
+### Advance the clock to next scheduled event (Diagnosis, Treatment, Recurrence, Death) ###
 from Glb_CheckTime import CheckTime
-CheckTime(entity, estimates, natHist, QALY)
+CheckTime(entity, params, natHist, QALY)
 
 ### Run next scheduled event/process according to state ###
 
-#People with a participating dentist undergo regular screening appointments    
+# Entities undergo some diagnostic testing 
 if entity.stateNum == 1.0:                
-    from SysP_ScreenAppt import ScreenAppt
-    screenappt = ScreenAppt(estimates, regcoeffs)            
-    screenappt.Process(entity)
-   
-#People with no dentist wait for disease event        
-if entity.stateNum == 1.8:
-    entity.time_Sysp += 1000      #Move system process clock forward by 1000 days (See footnote 1)
-        
-#People with a detected premalignancy undergo regular follow-up        
-if entity.stateNum == 2.0:
-    from SysP_OPLmanage import OPLManage
-    oplmanage = OPLManage(estimates, regcoeffs)            
-    oplmanage.Process(entity) 
 
-#People with a detected cancer undergo treatment       
+    # Just for debugging purposes
+    entity.uptake['GetsNGS'] = 'Yes'
+
+
+    from SysP_Diagnosis import Diagnosis
+    diag_firstline = Diagnosis(params)
+    if Scenario_TestTiming == 'firstline':
+        if entity.uptake['GetsNGS'] == 'No':
+            # Entities that do not take up NGS tests get conventional test
+            diag_firstline.Screentest(entity, 1)
+        elif Scenario_NGStest == 0:
+            # Only perform conventional testing on this entity
+            diag_firstline.Screentest(entity, 1)
+        elif Scenario_NGStest == 1:
+            # Determine test sequence
+            if Scenario_TestSequencing == 0:
+                diag_firstline.Screentest(entity, 2)
+            elif Scenario_TestSequencing == 1:
+                diag_firstline.Screentest(entity, 1)
+                diag_firstline.Screentest(entity, 2)
+            elif Scenario_TestSequencing == 2:
+                diag_firstline.Screentest(entity, 2)
+                diag_firstline.Screentest(entity, 1)
+    else:
+        # Only perform conventional testing on this entity
+        diag_firstline.Screentest(entity, 1)               
+    # Determine entity's diagnosis based on their test results
+    diag_firstline.GetDiagnosis(entity)
+    
+# Entities may receive companion diagnostics if they have the COO of interest
+if entity.stateNum == 1.5:
+    from SysP_CompanionDiagnostic import CompanionDiagnostic
+    companion = CompanionDiagnostic(entity.params)
+    companion.Process(entity, Scenario_Companion, Scenario_COO)
+   
+# People receive a prescribed course of treatment
+if entity.stateNum == 2.0:
+    from Glb_GenTTE import GenTTE
+    gentte = GenTTE(params, Regcoeffs, Scenario_AgeCohort)
+    gentte.ReadParam(entity)
+    gentte.MakeTTE(entity, Scenario_COO)
+    from SysP_ClinicalPrescription import ClinicalPrescription
+    prescription = ClinicalPrescription(entity.params, entity.regcoeffs)
+    prescription.Process(entity)
+
+#People with a diagnosed cancer undergo treatment
 if entity.stateNum == 3.0:
     from SysP_IncidentCancer import IncidentCancer
     incidentcancer = IncidentCancer(estimates, regcoeffs)
@@ -195,8 +200,35 @@ if entity.stateNum == 4.8:
     #entity is in remission, no further events occur
     entity.allTime = entity.natHist_deathAge + 0.0001
      
-#People with terminal disease receive palliative care     
+# People with recurrence undergo additional diagnostic work
 if entity.stateNum == 5.0:
+    diag_secondline = Diagnosis(params)
+    # In what order does diagnostic testing occur?
+    if Scenario_TestTiming['SecondLine'] == 1:
+        if entity.uptake['GetsNGS'] == 'No':
+            # Entities that do not take up NGS tests get conventional test
+            diag_secondline.Screentest(entity, 1)
+        elif Scenario_NGStest == 0:
+            # Only perform conventional testing on this entity
+            diag_secondline.Screentest(entity, 1)
+        elif Scenario_NGStest == 1:
+            # Determine test sequence
+            if Scenario_TestSequencing == 0:
+                diag_secondline.Screentest(entity, 2)
+            elif Scenario_TestSequencing == 1:
+                diag_secondline.Screentest(entity, 1)
+                diag_secondline.Screentest(entity, 2)
+            elif Scenario_TestSequencing == 2:
+                diag_secondline.Screentest(entity, 2)
+                diag_secondline.Screentest(entity, 1)
+    else:
+        # Only perform conventional testing on this entity
+        diag_secondline.Screentest(entity, 1)               
+    # Determine entity's diagnosis based on their test results
+    diag_secondline.GetDiagnosis(entity)
+
+# People with diagnosed recurrence undergo treatment
+if entity.stateNum == 6.0:
     from SysP_Terminal import Terminal
     terminal = Terminal(estimates, regcoeffs)
     terminal.Process(entity)
@@ -205,35 +237,54 @@ if entity.stateNum == 5.0:
 if entity.stateNum == 100:
     #print("Entity is", entity.death_desc, "at:", entity.time_death)
     events.append(('Entity dies', entity.time_death))
-    
+    entity.utility.append(('Dead', 0, entity.time_death))
+    break
+
 # An error has occurred
 if entity.stateNum == 99:
     print("An error has occurred and the simulation must end")
     print(entity.currentState)
+    break
     
+EntityList.append(entity)
+ResourceList.append(entity.resources)
+QALYList.append(entity.utility)
+
+    # END WHILE
     
-pprint(vars(entity))
-"""
-ResourceList.append(resources)
-EventsList.append(events)
-QALYList.append(QALY)
-"""
-"""
+looptime_end = time.time()
+looptime = round((looptime_end - looptime_start)/60, 2)
+print("The sequencer simulated", num_entities, "entities. It took", looptime, "minutes. You can do this.")
+
+################################
+# OPTIONAL STEP - SAVE OUTPUTS TO DISK 
+
+numpy.save('EntityList', EntityList)
 numpy.save('ResourceList', ResourceList)
 numpy.save('EventsList', EventsList)
 numpy.save('QALYList', QALYList)
 
-from NatHist_OralCancer import NatHistOCa
-nathist = NatHistOCa(estimates, regcoeffs)
-nathist.Process(entity, natHist)
+################################
+# STEP 3 - ESTIMATE COSTS AND SURVIVAL FOR SIMULATED COHORT
+from Glb_AnalyzeOutput import Analyze_Output
+output = Analyze_Output(estimates, CostDict)
 
-entity.nh_status = 1.0
-entity.OPLStatus = 1
-entity.nh_status = 1.0
-entity.natHist = []
-entity.age = entity.startAge
-entity.hasCancer = 1
-entity.cancerStage = 'I'
-entity.stateNum = 1.0
-entity.utility = ("Undetected Stage I", estimates.Util_StageI_Undetected.sample(), entity.allTime)
-"""
+# Estimate the costs generated by the entities in the population
+CohortCost = []
+for i in range(len(EntityList)):
+    entity = EntityList[i]
+    CohortCost.append(output.EntityCost(entity))
+    
+# Estimate the LYG and QALY generated by the entities in the population
+CohortSurvival = np.array([output.EntitySurvival(x) for x in EntityList])
+CohortLYG = CohortSurvival[:,0]
+CohortQALY = CohortSurvival[:,1]
+
+
+####################################################
+# FOOTNOTE:
+#
+#   1 - The clock moves forward an arbitrary number of days, but is reset to the next natural
+#       history or disease event by 'Glb_Checktime.py'. The purpose of moving the clock forward is
+#       simply to prompt advancement to the next event.
+

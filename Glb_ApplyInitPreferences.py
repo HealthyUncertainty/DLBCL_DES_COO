@@ -6,7 +6,12 @@ Create a probabilistically-sampled preferences table for each entity.
 """
 
 def getrand(mean, SE):
-    return numpy.random.normal(mean, SE)
+    # Reference values have a value of zero
+    if mean == 0 and SE == 0:
+        return(0)
+    # All other values are randomly sampled from a normal distribution
+    else:
+        return numpy.random.normal(mean, SE)
 
 import numpy
 class ApplyInitPreferences:

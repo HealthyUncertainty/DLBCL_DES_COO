@@ -19,12 +19,10 @@ class Entity(object):
        self.allTime = 0
        
        # "syspTime" denotes the time at which the next system process is scheduled to occur
-       self.time_Sysp = 0       
+       self.time_Sysp = 0
        
-       # "nh_" refers to Natural History processes used in the "NatHist" programs to set out the 
-       self.nh_status = 0.0
-       self.nh_time = 0
-       self.nh_det = 0
+       # Entity starts without recurrence
+       self.recurrence = 0
        
        # Create lists to hold natural history, events, resources, and utility data
        self.natHist = []

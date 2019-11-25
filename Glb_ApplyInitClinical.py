@@ -24,7 +24,7 @@ class ApplyInitClinical:
         elif COOprob <= self.probGCB + self.probABC:
             entity.COO = 'ABC'
         elif COOprob <= self.probGCB + self.probABC + self.probUndef:
-            entity.COO = 'Undefined'          
+            entity.COO = 'Undef'          
         elif COOprob <= self.probGCB + self.probABC + self.probUndef + self.probDhit:
             entity.COO = 'Dhit'
             
@@ -36,17 +36,3 @@ class ApplyInitClinical:
             entity.stateNum = 99
             entity.currentState = "ERROR - Something has gone wrong in 'ApplyInitClinical.py'"
 
-####################################################
-# VARIABLES CREATED IN THIS STEP:
-#
-#   startAge - the entity's age at the beginning of the model
-#   sex - the entity's binary sex (1: female; 0: male)
-#   smokeStatus - whether the entity is a never or ever smoker (1: ever; 0: never)
-#   alcStatus - whether or not the entity is a heavy alcohol user (1: yes; 0: no)
-#   OPLStatus - whether or not the entity has an active OPL (1: yes; 0: no)
-#   hasDentist - whether or not the entity has a dentist who performs screening tests (1: yes; 0: no)
-#   hasCancer - whether or not the entity has an active cancer (1: yes; 0: no)
-#   diseaseDetected - whether or not the entity has a premalignancy or a cancer that has been detected (1: yes; 0: no)
-#   cancerDetected - whether or not the entity has a cancer that has been detected (1: yes; 0: no)
-#   natHist_deathAge - the age at which the entity will die of natural causes
-#   probOPL - the probability that the entity starts the simulation with a premalignancy
