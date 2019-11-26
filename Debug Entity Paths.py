@@ -180,7 +180,7 @@ if entity.stateNum == 2.0:
     gentte.ReadParam(entity)
     gentte.MakeTTE(entity, Scenario_COO)
     from SysP_ClinicalPrescription import ClinicalPrescription
-    prescription = ClinicalPrescription(entity.params, entity.regcoeffs)
+    prescription = ClinicalPrescription(entity.params)
     prescription.Process(entity)
 
 #People with a diagnosed cancer undergo treatment
