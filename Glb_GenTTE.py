@@ -92,17 +92,11 @@ class GenTTE:
         # Is the enity eligible for experimental treatment?
         eligible = 0
         if entity.COO_diag in COOlist:
-            # Does the entity have an eligible subtype
+            # If the entity has an eligible subtype and got an NGS test
             if entity.hadNGS == 1:
-                # Did the entity get an NGS test?
+                # If the entity's diagnosed COO is properly diagnosed
                 if entity.COO == entity.COO_diag:
-                    # Is the entity's diagnosed COO accurate?
-                    if entity.getsCompanion == 1 or entity.getsCompanion == 9:
-                        # Has the entity received the companion diagnostic, or is there none available?
-                        eligible = 1
-        if hasattr('GotFirstNGS', entity) == True:
-            # If the entity has already received NGS-guided treatment, they can't receive it again
-            eligible = 0
+                    eligible = 1
 
         # Estimate entity's survival parameters
         survdict = {}
@@ -116,9 +110,7 @@ class GenTTE:
         FailtoDeath = survdict['Tx_Tprob_FailtoDeath']
 
         # Will the entity receive an experimental treatment?
-        entity.NGStreat = 0
         if eligible == 1:
-            entity.NGStreat = 1
             # Is this the first or second line of treatment?
             secondline = 0
             if entity.recurrence == 1:
@@ -127,7 +119,6 @@ class GenTTE:
             if secondline == 0:
                 # Adjust time to recurrence using hazard ratio from first line of treatment
                 CRtoFail['Intercept'] += entity.params['Tx_HR_NewTx_Firstline']
-                entity.GotFirstNGS = 1
             else:
                 # Adjust post-recurrence survival using hazard ratio from second line of treatment
                 FailtoDeath['Intercept'] += entity.params['Tx_HR_NewTx_Secondline']
@@ -136,9 +127,8 @@ class GenTTE:
 
         timeslist = []
         for tprob in tproblist:
-            shape = math.exp(tprob['Sigma'])
-            lmbda = math.exp(tprob['Intercept'])
-            scale = 1/lmda
+            shape = 1/tprob['Sigma']
+            scale = math.exp(tprob['Intercept'])
             time = numpy.random.weibull(shape)*scale
             timeslist.append(time)
 

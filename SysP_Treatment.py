@@ -7,9 +7,10 @@ adverse effects from that treatment. When they reach the maximum number of treat
 """
 import random
 
-class Treatment:
-    def __init__(self, params):
+class IncidentCancer:
+    def __init__(self, params, regcoeffs):
         self._params = params
+        self._regcoeffs = regcoeffs
 
     def Process(self, entity):
         if hasattr(entity, "cycleNum") == False:
@@ -21,7 +22,7 @@ class Treatment:
             # Entity is done treatment and now goes to their first follow-up appointment
             entity.events.append(("Completed treatment", entity.allTime))
             entity.stateNum = 3.9
-            entity.currentState = "3.9 - Route to Followup"
+            entity.currentState = "3.9 - Assign recurrence date"
 
         else:
             # Entity receives a cycle of treatment
@@ -36,16 +37,16 @@ class Treatment:
                 entity.utility.append((self._params['Util_AdvEvent_Standard'], entity.allTime))
 
             # If entity has the appropriate COO and NGS testing, they may receive experimental care
-            if entity.NGStreat == 1:
-                entity.resources.append(("Treatment - NGS-guided Care", entity.allTime))
-                entity.utility.append((self._params['Util_Treatment_NGS'], entity.allTime))
+            if entity.GEPcare == 1:
+                entity.resources.append(("Treatment - GEP-guided Care", entity.allTime))
+                entity.utility.append((self._params['Util_Treatment_GEP'], entity.allTime))
 
                 # Does entity experience an adverse event?
                 adverse_event = random.random()
-                if adverse_event > self._params['Tx_ProbAdverseEvent_NGS']:
-                    entity.resources.append(("Adverse Event - NGS-guided Care", entity.allTime))
-                    entity.events.append(("Adverse Event - NGS-guided Care", entity.allTime))
-                    entity.utility.append((self._params['Util_AdvEvent_NGS'], entity.allTime))
+                if adverse_event > self._params['Tx_ProbAdverseEvent_GEP']:
+                    entity.resources.append(("Adverse Event - GEP-guided Care", entity.allTime))
+                    entity.events.append(("Adverse Event - GEP-guided Care", entity.allTime))
+                    entity.utility.append((self._params['Util_AdvEvent_GEP'], entity.allTime))
 
             # Record the number of cycles that have occurred
             entity.cycleNum += 1
