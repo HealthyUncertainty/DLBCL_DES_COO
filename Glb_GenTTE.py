@@ -127,8 +127,12 @@ class GenTTE:
 
         timeslist = []
         for tprob in tproblist:
-            shape = 1/tprob['Sigma']
-            scale = math.exp(tprob['Intercept'])
+            # Stata's output is converted into shape and scale parameters
+            ln_p = tprob['Sigma']
+            const = tprob['Intercept']
+            shape = math.exp(ln_p)
+            scale = math.exp(-const/shape)
+            # Draw a random value with 'shape' and 'scale'
             time = numpy.random.weibull(shape)*scale
             timeslist.append(time)
 

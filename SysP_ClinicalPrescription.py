@@ -6,9 +6,8 @@ Created on Fri Nov 15 10:34:59 2019
 """
 
 class ClinicalPrescription:
-    def __init__(self, params, regcoeffs):
+    def __init__(self, params):
         self._params = params
-        self._regcoeffs = regcoeffs
     
     def Process(self, entity):
         if hasattr(entity, 'recurrence') == False:
