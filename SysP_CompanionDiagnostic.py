@@ -25,6 +25,7 @@ class CompanionDiagnostic:
         # Will the entity receive a companion diagnostic?
         if scenario == 0:
             # No companion diagnostics in this scenario - do nothing
+            entity.getsCompanion = 9
             entity.stateNum = 2.0
             entity.currentState = "2.0 - Going for clinical prescription"
         elif entity.hadNGS == 0:

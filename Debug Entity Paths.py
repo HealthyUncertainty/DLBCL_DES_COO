@@ -185,9 +185,15 @@ if entity.stateNum == 2.0:
 
 #People with a diagnosed cancer undergo treatment
 if entity.stateNum == 3.0:
-    from SysP_IncidentCancer import IncidentCancer
-    incidentcancer = IncidentCancer(estimates, regcoeffs)
-    incidentcancer.Process(entity)        
+    from SysP_Treatment import Treatment
+    treatment = Treatment(entity.params)
+    treatment.Process(entity)        
+
+# After treatment, the entity gets routed to followup
+if entity.stateNum == 3.9:
+    from SysP_ToFollowup import ToFollowup
+    tofolup = ToFollowup(entity)
+    tofolup.Process(entity)
 
 #People who have been successfully treated undergo regular follow-up     
 if entity.stateNum == 4.0:
