@@ -26,7 +26,9 @@ def CheckTime(entity, estimates, natHist, QALY):
         # Has entity been scheduled to die of disease?           
         if hasattr(entity, 'time_DeadofDisease'):
             # Disease within last 3 months of life
-            time_EOL = entity.time_DeadofDisease - 90     
+            time_EOL = entity.time_DeadofDisease - 90
+            if time_EOL < 0:
+                time_EOL = entity.allTime
         else:
             # If entity doesn't have DoD time, insert placeholder
             entity.time_DeadofDisease = 999999
@@ -54,7 +56,7 @@ def CheckTime(entity, estimates, natHist, QALY):
         # If entity has reached end of life state (last 3 months of life)               
         elif entity.allTime >= time_EOL:
             # Entity is in the "terminal disease" health state
-            entity.stateNum = 5.0               
+            entity.stateNum = 7.0               
             entity.currentState = "End of Life"                
             entity.endOfLife = 1
 
@@ -68,18 +70,18 @@ def CheckTime(entity, estimates, natHist, QALY):
                 entity.time_Recurrence = 666666
                 # Flag entity as having active recurrence
                 entity.recurrence = 1
-                entity.cancerStage = "Recur"
+                entity.events.append(('Disease recurrence', entity.allTime))
                 # Entity returns for diagnostic workup and possible treatment
-                entity.stateNum = 3.0
-                entity.currentState = "Treatment for recurrence"
+                entity.stateNum = 5.0
+                entity.currentState = "Recurrence - undergoing diagnostic workup"
                 
             elif entity.time_Recurrence >= time_EOL:    # EOL occurs before recurrence
             # If entity is currently more than 3 months from death, set next system process time as EOL date
-                entity.allTime = entity.time_EOL
+                entity.allTime = time_EOL
                 # Future recurrence set to impossible date (SEE FOOTNOTE 2)
                 entity.time_Recurrence = 666666
                 # Entity is in the "terminal disease" health state
-                entity.stateNum = 5.0
+                entity.stateNum = 7.0
                 entity.currentState = "End of Life"                
                 entity.endOfLife = 1
            
@@ -95,7 +97,7 @@ def CheckTime(entity, estimates, natHist, QALY):
             # Future recurrence set to impossible date (SEE FOOTNOTE 2)
             entity.time_Recurrence = 666666
             # Entity is in the "terminal disease" health state
-            entity.stateNum = 5.0               
+            entity.stateNum = 7.0               
             entity.currentState = "End of Life"                
             entity.endOfLife = 1
                 
@@ -110,10 +112,10 @@ def CheckTime(entity, estimates, natHist, QALY):
             if hasattr(entity, 'loopcount') == False:
                 entity.loopcount = 1
             else:
-                if entity.loopcount < 1000: # An arbitrarily high number
+                if entity.loopcount < 5: # An arbitrarily high number
                     entity.loopcount += 1
                 else:
-                    entity.failstate = entity.stateNum
+                    entity.failState = entity.stateNum
                     entity.stateNum = 99
                     entity.currentState = ("ERROR - entity caught in Sysp/allTime loop - look at Glb_Checktime.py. This error happened when the entity was in stateNum", entity.failState)
             

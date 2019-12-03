@@ -127,5 +127,6 @@ class Diagnosis:
                 else:
                     entity.COO_diag = 'Non-ABC'
                     
+        entity.time_Sysp = entity.allTime
         entity.stateNum = 1.5
         entity.currentState = "1.5 - Companion diagnostic testing"

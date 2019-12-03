@@ -83,7 +83,7 @@ Scenario_COO = {'ABC': Scenario_COO_ABC, 'Dhit': Scenario_COO_Dhit, 'GCB': Scena
 with open('entityABC.pickle', 'rb') as f:
     entity = pickle.load(f)
     params = entity.params
-
+"""
 from Glb_CreateEntity import Entity
 entity = Entity()
 
@@ -93,7 +93,7 @@ entity_estimates = MakeEstimates(Ptable)
 entity_estimates.Process(entity)
 params = entity.params
 
-"""
+#"""
   
 "Create resource table"
 resources = []
@@ -175,24 +175,25 @@ if entity.stateNum == 1.5:
    
 # People receive a prescribed course of treatment
 if entity.stateNum == 2.0:
-    from Glb_GenTTE import GenTTE
-    gentte = GenTTE(params, Regcoeffs, Scenario_AgeCohort)
-    gentte.ReadParam(entity)
-    gentte.MakeTTE(entity, Scenario_COO)
+    if hasattr(entity, 'TTE') == False:
+        from Glb_GenTTE import GenTTE
+        gentte = GenTTE(params, Regcoeffs, Scenario_AgeCohort)
+        gentte.ReadParam(entity)
+        gentte.MakeTTE(entity, Scenario_COO, Scenario_TestTiming)
     from SysP_ClinicalPrescription import ClinicalPrescription
     prescription = ClinicalPrescription(entity.params)
     prescription.Process(entity)
 
 #People with a diagnosed cancer undergo treatment
 if entity.stateNum == 3.0:
-    from SysP_IncidentCancer import IncidentCancer
-    incidentcancer = IncidentCancer(estimates, regcoeffs)
-    incidentcancer.Process(entity)        
+    from SysP_Treatment import Treatment
+    treatment = Treatment(entity.params)
+    treatment.Process(entity)  
 
 #People who have been successfully treated undergo regular follow-up     
 if entity.stateNum == 4.0:
     from SysP_Followup import Followup
-    followup = Followup(estimates, regcoeffs)
+    followup = Followup(entity.params)
     followup.Process(entity)
 
 #People whose disease has entered remission after 10 years     
@@ -204,7 +205,7 @@ if entity.stateNum == 4.8:
 if entity.stateNum == 5.0:
     diag_secondline = Diagnosis(params)
     # In what order does diagnostic testing occur?
-    if Scenario_TestTiming['SecondLine'] == 1:
+    if Scenario_TestTiming == 'secondline':
         if entity.uptake['GetsNGS'] == 'No':
             # Entities that do not take up NGS tests get conventional test
             diag_secondline.Screentest(entity, 1)
@@ -227,7 +228,7 @@ if entity.stateNum == 5.0:
     # Determine entity's diagnosis based on their test results
     diag_secondline.GetDiagnosis(entity)
 
-# People with diagnosed recurrence undergo treatment
+# People receive palliative care at the end of their life
 if entity.stateNum == 6.0:
     from SysP_Terminal import Terminal
     terminal = Terminal(estimates, regcoeffs)

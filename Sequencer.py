@@ -23,7 +23,7 @@ from Glb_LoadParameters import LoadParameters
 ################################
 # STEP 1 - SET UP THE SEQUENCER
 "Define the number of entities you want to model"
-num_entities = 50000
+num_entities = 500
 
 "Load the data from the Excel spreadsheet"
 inbook = load_workbook('InputParameters.xlsx')
@@ -60,14 +60,16 @@ Scenario_COO_ABC = 1
 Scenario_COO_Dhit = 0
 Scenario_COO_GCB = 0
 Scenario_COO_Undef = 0
-# When does testing occur: 'firstline' or 'secondline'?
-Scenario_TestTiming = 'firstline'
+# When does testing occur: 'FirstLine' or 'SecondLine'?
+Scenario_TestTiming = 'FirstLine'
 # 0 - no NGS testing offered; 1 - NGS testing offered
 Scenario_NGStest = 1
 # 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
 Scenario_TestSequencing = 0
 # Age group of interest: 0 - general population; 1 - under 60; 2 - 60+ 
 Scenario_AgeCohort = 0
+# Companion Diagnostic: 0 - No; 1 - Yes
+Scenario_Companion = 1
 
 ################################
 # STEP 3 - RUN THE SEQUENCER
@@ -75,7 +77,7 @@ ResourceList = []
 EventsList = []
 QALYList = []
 EntityList = []
-Scenario_COO = (Scenario_COO_ABC, Scenario_COO_Dhit, Scenario_COO_GCB, Scenario_COO_Undef)
+Scenario_COO = {'ABC': Scenario_COO_ABC, 'Dhit': Scenario_COO_Dhit, 'GCB': Scenario_COO_GCB, 'Undef': Scenario_COO_Undef}
 
 looptime_start = time.time()
 for i in range(0, num_entities):
@@ -105,12 +107,14 @@ for i in range(0, num_entities):
             from Glb_ApplyInitDemo import ApplyInitDemo
             applydemo = ApplyInitDemo(params)
             applydemo.Process(entity)
-    
+        
         # Apply Clinical Characteristics to a newly-created entity
         if entity.stateNum == 0.1:
             from Glb_ApplyInitClinical import ApplyInitClinical
             applyclin = ApplyInitClinical(params)
             applyclin.Process(entity)
+            # Just for debugging purposes
+            entity.COO = 'ABC'
             
         # Apply preference estimates to a newly-created entity
         if entity.stateNum == 0.2:
@@ -129,11 +133,16 @@ for i in range(0, num_entities):
         ### Advance the clock to next scheduled event (Diagnosis, Treatment, Recurrence, Death) ###
         from Glb_CheckTime import CheckTime
         CheckTime(entity, params, natHist, QALY)
-
+        
         ### Run next scheduled event/process according to state ###
-    
+        
         # Entities undergo some diagnostic testing 
         if entity.stateNum == 1.0:                
+        
+            # Just for debugging purposes
+            entity.uptake['GetsNGS'] = 'Yes'
+        
+        
             from SysP_Diagnosis import Diagnosis
             diag_firstline = Diagnosis(params)
             if Scenario_TestTiming == 'firstline':
@@ -167,23 +176,29 @@ for i in range(0, num_entities):
            
         # People receive a prescribed course of treatment
         if entity.stateNum == 2.0:
-            from Glb_GenTime import GenTime
+            # Has entity had their clinical events scheduled?
+            if hasattr(entity, 'TTE') == False:
+                # Create time-to-event estimates for entity
+                from Glb_GenTTE import GenTTE
+                gentte = GenTTE(params, Regcoeffs, Scenario_AgeCohort)
+                gentte.ReadParam(entity)
+                gentte.MakeTTE(entity, Scenario_COO, Scenario_TestTiming)
             from SysP_ClinicalPrescription import ClinicalPrescription
-            prescription = ClinicalPrescription(entity.params, entity.regcoeffs)
+            prescription = ClinicalPrescription(entity.params)
             prescription.Process(entity)
         
         #People with a diagnosed cancer undergo treatment
         if entity.stateNum == 3.0:
-            from SysP_IncidentCancer import IncidentCancer
-            incidentcancer = IncidentCancer(estimates, regcoeffs)
-            incidentcancer.Process(entity)        
-
+            from SysP_TxFirstLine import TxFirstLine
+            txfirstline = TxFirstLine(entity.params)
+            txfirstline.Process(entity, Scenario_TestTiming)
+        
         #People who have been successfully treated undergo regular follow-up     
         if entity.stateNum == 4.0:
             from SysP_Followup import Followup
-            followup = Followup(estimates, regcoeffs)
+            followup = Followup(entity.params)
             followup.Process(entity)
-   
+        
         #People whose disease has entered remission after 10 years     
         if entity.stateNum == 4.8:
             #entity is in remission, no further events occur
@@ -193,7 +208,7 @@ for i in range(0, num_entities):
         if entity.stateNum == 5.0:
             diag_secondline = Diagnosis(params)
             # In what order does diagnostic testing occur?
-            if Scenario_TestTiming['SecondLine'] == 1:
+            if Scenario_TestTiming == 'secondline':
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_secondline.Screentest(entity, 1)
@@ -215,11 +230,23 @@ for i in range(0, num_entities):
                 diag_secondline.Screentest(entity, 1)               
             # Determine entity's diagnosis based on their test results
             diag_secondline.GetDiagnosis(entity)
-
-        # People with diagnosed recurrence undergo treatment
+        
+        # Companion diagnostic for second-line treatment
+        if entity.stateNum == 5.5:
+            from SysP_CompanionDiagnostic import CompanionDiagnostic
+            companion = CompanionDiagnostic(entity.params)
+            companion.Process(entity, Scenario_Companion, Scenario_COO)
+        
+        # An entity receiving second-line treatment
         if entity.stateNum == 6.0:
+            from SysP_TxSecondLine import TxSecondLine
+            txsecondline = TxSecondLine(entity.params)
+            txsecondline.Process(entity, Scenario_TestTiming)  
+        
+        # People receive palliative care at the end of their life
+        if entity.stateNum == 7.0:
             from SysP_Terminal import Terminal
-            terminal = Terminal(estimates, regcoeffs)
+            terminal = Terminal(entity.params)
             terminal.Process(entity)
       
         #The entity is dead      
@@ -243,7 +270,7 @@ for i in range(0, num_entities):
     
 looptime_end = time.time()
 looptime = round((looptime_end - looptime_start)/60, 2)
-print("The sequencer simulated", num_entities, "entities. It took", looptime, "minutes. You can do this.")
+print("The sequencer simulated", num_entities, "entities. It took", looptime, "minutes.")
 
 ################################
 # OPTIONAL STEP - SAVE OUTPUTS TO DISK 

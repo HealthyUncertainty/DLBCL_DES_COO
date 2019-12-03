@@ -25,12 +25,10 @@ class CompanionDiagnostic:
         # Will the entity receive a companion diagnostic?
         if scenario == 0:
             # No companion diagnostics in this scenario - do nothing
-            entity.stateNum = 2.0
-            entity.currentState = "2.0 - Going for clinical prescription"
+            entity.getsCompanion = 9
         elif entity.hadNGS == 0:
             # Entity didn't receive an NGS test - do nothing
-            entity.stateNum = 2.0
-            entity.currentState = "2.0 - Going for clinical prescription"
+            pass
         elif entity.COO_diag in coolist:
             # Entity's diagnosed COO is eligible, they will receive it
             entity.compDiag = 1
@@ -41,8 +39,10 @@ class CompanionDiagnostic:
         if entity.compDiag == 1:
             entity.resources.append(("Companion Diagnostic", entity.allTime))
             getsComp = random.random()
-            if getsComp < self._params['Diag_companion_eligible']:
+            if getsComp < self._params['Diag_CompanionEligible']:
                 # Entity is eligible for experimental treatment
                 entity.getsCompanion = 1
-                entity.stateNum = 2.0
-                entity.currentState = "2.0 - Going for clinical prescription"
+        
+        entity.time_Sysp = entity.allTime
+        entity.stateNum = 2.0
+        entity.currentState = "2.0 - Going for clinical prescription"
