@@ -44,7 +44,7 @@ class Followup:
                 entity.resources.append((folup, entity.allTime))
                 entity.time_Sysp += self._params['Folup_Time_AppInterval']
             else:
-                entity.resources.append(("Follow-up appointment - final", entity.allTime))
+                entity.resources.append(("Follow-up - final", entity.allTime))
                 entity.events.append(("Entity's cancer is in remission", entity.allTime))
                 entity.utility.append((self._params['Util_Remission'], entity.allTime))
 

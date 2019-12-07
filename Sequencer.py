@@ -29,21 +29,16 @@ num_entities = 500
 inbook = load_workbook('InputParameters.xlsx')
 loadparams = LoadParameters(inbook)
 loadparams.getEstimates()
-#loadparams.getCostcoeffs()
+loadparams.getCostcoeffs()
 loadparams.getRegcoeffs()
 loadparams.getPrefcoeffs()
 loadparams.getTestchars()
 
-with open('estimates.pickle', 'rb') as f:
-    Ptable = pickle.load(f)
-#with open('costcoeffs.pickle', 'rb') as f:
- #   Costcoeffs = pickle.load(f)
-with open('regcoeffs.pickle', 'rb') as f:
-    Regcoeffs = pickle.load(f)
-with open('prefcoeffs.pickle', 'rb') as f:
-    Prefcoeffs = pickle.load(f)
-with open('testchars.pickle', 'rb') as f:
-    Testchars = pickle.load(f)
+Ptable = loadparams.Ptable
+Costcoeffs = loadparams.Costcoeffs
+Regcoeffs = loadparams.Regcoeffs
+Prefcoeffs = loadparams.Prefcoeffs
+Testchars = loadparams.Testchars
 
 ################################
 # STEP 2 - CREATE A NEXT-GEN TEST BEING EVALUATED
@@ -145,7 +140,7 @@ for i in range(0, num_entities):
         
             from SysP_Diagnosis import Diagnosis
             diag_firstline = Diagnosis(params)
-            if Scenario_TestTiming == 'firstline':
+            if Scenario_TestTiming == 'FirstLine':
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_firstline.Screentest(entity, 1)
@@ -208,7 +203,7 @@ for i in range(0, num_entities):
         if entity.stateNum == 5.0:
             diag_secondline = Diagnosis(params)
             # In what order does diagnostic testing occur?
-            if Scenario_TestTiming == 'secondline':
+            if Scenario_TestTiming == 'SecondLine':
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_secondline.Screentest(entity, 1)

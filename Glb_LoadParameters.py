@@ -26,6 +26,7 @@ class LoadParameters:
             setattr(estimates, line[0].value, Estimate(line[1].value, line[2].value, line[3].value, line[4].value))
         
         del(estimates.Parameter)
+        self.Ptable = estimates
         with open('estimates.pickle', 'wb') as inputs:
             pickle.dump(estimates, inputs, pickle.HIGHEST_PROTOCOL)
 
@@ -58,6 +59,7 @@ class LoadParameters:
             if vartype not in config[param][group][factor]:
                 config[param][group][factor][vartype] = {"mean": mean, "SE": SE}
         
+        self.Regcoeffs = config
         with open('regcoeffs.pickle', 'wb') as regcoeffs:
             pickle.dump(config, regcoeffs, pickle.HIGHEST_PROTOCOL)
     
@@ -69,7 +71,7 @@ class LoadParameters:
             if not line[0].value:
                 # There's no estimate name in this row.
                 continue
-            setattr(cost_estimates, line[0].value, Estimate(line[1].value, line[2].value, line[3].value))
+            setattr(cost_estimates, line[0].value, Estimate(line[1].value, line[2].value, line[3].value, line[4].value))
         del(cost_estimates.Parameter)
         
         # Create a dictionary of unit costs that the program will read from
@@ -77,11 +79,15 @@ class LoadParameters:
         for i in range(0, costsheet.max_row):
             cost_name = str(costsheet.cell(row = i+1, column = 1).value)
             cost_type = costsheet.cell(row = i+1, column = 2).value
-            cost_mean = costsheet.cell(row = i+1, column = 3).value
-            cost_se = costsheet.cell(row = i+1, column = 4).value
+            cost_varnum = costsheet.cell(row = i+1, column = 3).value
+            cost_mean = costsheet.cell(row = i+1, column = 4).value
+            cost_se = costsheet.cell(row = i+1, column = 5).value
             CostDict[cost_name] = (cost_type, cost_mean, cost_se)
         del(CostDict['Parameter'])
-        #del(CostDict['None'])
+        
+        self.Costcoeffs = CostDict
+        with open('costcoeffs.pickle', 'wb') as costcoeffs:
+            pickle.dump(CostDict, costcoeffs, pickle.HIGHEST_PROTOCOL)
 
     # Import preferences from table
     def getPrefcoeffs(self):
@@ -111,6 +117,7 @@ class LoadParameters:
             else:
                 print("Parameter", param, "needs to have a 'TypeNo' of 1, 2, or a blank 'Value'. Check your input table.")
         
+        self.Prefcoeffs = pconfig
         with open('prefcoeffs.pickle', 'wb') as prefcoeffs:
             pickle.dump(pconfig, prefcoeffs, pickle.HIGHEST_PROTOCOL)
     
@@ -127,5 +134,6 @@ class LoadParameters:
             tcharsource[row][0] = str(tcharsource[row][0])
             tcharsource[row][1] = str(tcharsource[row][1])
         
+        self.Testchars = tcharsource
         with open('testchars.pickle', 'wb') as testchars:
             pickle.dump(tcharsource, testchars, pickle.HIGHEST_PROTOCOL)

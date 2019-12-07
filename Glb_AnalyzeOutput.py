@@ -15,30 +15,11 @@ from openpyxl import load_workbook                  # Load the import function
 import numpy
 import math
 import random
-import simpy
 
 "Import values from the table"
 
-from Glb_Estimates import Estimates
-from Glb_Estimates import Estimate# Load data from the Excel spreadsheet
-
-"""
-from openpyxl import load_workbook
-workbook = load_workbook('InputParameters.xlsx')
-costsheet = workbook["Costs"]
-cost_estimates = Estimates()
-for line in costsheet.rows:
-        if not line[0].value:
-            # There's no estimate name in this row.
-            continue
-        setattr(cost_estimates, line[0].value, Estimate(line[1].value, line[2].value, line[3].value))
-    del(cost_estimates.Parameter)
-"""
-
 ##################################################################################################
 
-from Glb_Estimates import Estimates
-from Glb_Estimates import Estimate
 
 class Analyze_Output:
     def __init__(self, estimates, costdict):

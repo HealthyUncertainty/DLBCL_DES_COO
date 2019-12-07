@@ -99,7 +99,7 @@ class GenTime:
         if eligible == 1:
             # Is this the first or second line of treatment?
             secondline = 0
-            if entity.recurrence = 1:
+            if entity.recurrence == 1:
                 secondline = 1
             # What is the hazard rate associated with the experimental treatment?
             if secondline == 0:
