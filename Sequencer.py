@@ -22,22 +22,22 @@ from Glb_LoadParameters import LoadParameters
 #############################################################################################
 ################################
 # STEP 1 - SET UP THE SEQUENCER
-"Define the number of entities you want to model"
-num_entities = 500
 
 "Load the data from the Excel spreadsheet"
 inbook = load_workbook('InputParameters.xlsx')
 loadparams = LoadParameters(inbook)
+loadparams.getScenario()
 loadparams.getEstimates()
 loadparams.getCostcoeffs()
 loadparams.getRegcoeffs()
 loadparams.getPrefcoeffs()
 loadparams.getTestchars()
 
+Scntable = loadparams.Scntable
 Ptable = loadparams.Ptable
-Costcoeffs = loadparams.Costcoeffs
-Regcoeffs = loadparams.Regcoeffs
-Prefcoeffs = loadparams.Prefcoeffs
+CostDict = loadparams.Costcoeffs
+RegDict = loadparams.Regcoeffs
+PrefDict = loadparams.Prefcoeffs
 Testchars = loadparams.Testchars
 
 ################################
@@ -50,21 +50,11 @@ diag_test = maketest.Process()
 ################################
 # STEP 3 - DEFINE THE TESTING SEQUENCE AND SCENARIO
 
-# COO Subtype of interest: 'ABC', 'GCB'. 'Dhit', 'Undefined'
-Scenario_COO_ABC = 1
-Scenario_COO_Dhit = 0
-Scenario_COO_GCB = 0
-Scenario_COO_Undef = 0
-# When does testing occur: 'FirstLine' or 'SecondLine'?
-Scenario_TestTiming = 'FirstLine'
-# 0 - no NGS testing offered; 1 - NGS testing offered
-Scenario_NGStest = 1
-# 0 - NGS only; 1 - conventional then NGS; 2 - NGS then conventional
-Scenario_TestSequencing = 0
-# Age group of interest: 0 - general population; 1 - under 60; 2 - 60+ 
-Scenario_AgeCohort = 0
-# Companion Diagnostic: 0 - No; 1 - Yes
-Scenario_Companion = 1
+if Scntable['TestTiming'] == 1:
+    TestTiming = 'FirstLine'
+if Scntable['TestTiming'] == 2:
+    TestTiming = 'SecondLine'
+Scenario_COO = {'ABC': Scntable['COO_ABC'], 'Dhit': Scntable['COO_Dhit'], 'GCB': Scntable['COO_GCB'], 'Undef': Scntable['COO_Undef']}
 
 ################################
 # STEP 3 - RUN THE SEQUENCER
@@ -72,7 +62,10 @@ ResourceList = []
 EventsList = []
 QALYList = []
 EntityList = []
-Scenario_COO = {'ABC': Scenario_COO_ABC, 'Dhit': Scenario_COO_Dhit, 'GCB': Scenario_COO_GCB, 'Undef': Scenario_COO_Undef}
+
+"Define the number of entities you want to model"
+num_entities = Scntable['CohortSize']
+timehorizon = Scntable['TimeHorizon']
 
 looptime_start = time.time()
 for i in range(0, num_entities):
@@ -114,7 +107,7 @@ for i in range(0, num_entities):
         # Apply preference estimates to a newly-created entity
         if entity.stateNum == 0.2:
             from Glb_ApplyInitPreferences import ApplyInitPreferences
-            applypref = ApplyInitPreferences(Prefcoeffs)
+            applypref = ApplyInitPreferences(PrefDict)
             applypref.Process(entity)
             
         # Determine diagnostic pathway from patient and provider preferences
@@ -140,21 +133,21 @@ for i in range(0, num_entities):
         
             from SysP_Diagnosis import Diagnosis
             diag_firstline = Diagnosis(params)
-            if Scenario_TestTiming == 'FirstLine':
+            if TestTiming == 'FirstLine':
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_firstline.Screentest(entity, 1)
-                elif Scenario_NGStest == 0:
+                elif Scntable['NGSTest'] == 0:
                     # Only perform conventional testing on this entity
                     diag_firstline.Screentest(entity, 1)
-                elif Scenario_NGStest == 1:
+                elif Scntable['NGSTest'] == 1:
                     # Determine test sequence
-                    if Scenario_TestSequencing == 0:
+                    if Scntable['TestSequencing'] == 0:
                         diag_firstline.Screentest(entity, 2)
-                    elif Scenario_TestSequencing == 1:
+                    elif Scntable['TestSequencing'] == 1:
                         diag_firstline.Screentest(entity, 1)
                         diag_firstline.Screentest(entity, 2)
-                    elif Scenario_TestSequencing == 2:
+                    elif Scntable['TestSequencing'] == 2:
                         diag_firstline.Screentest(entity, 2)
                         diag_firstline.Screentest(entity, 1)
             else:
@@ -167,7 +160,7 @@ for i in range(0, num_entities):
         if entity.stateNum == 1.5:
             from SysP_CompanionDiagnostic import CompanionDiagnostic
             companion = CompanionDiagnostic(entity.params)
-            companion.Process(entity, Scenario_Companion, Scenario_COO)
+            companion.Process(entity, Scntable['Companion'], Scenario_COO)
            
         # People receive a prescribed course of treatment
         if entity.stateNum == 2.0:
@@ -175,9 +168,9 @@ for i in range(0, num_entities):
             if hasattr(entity, 'TTE') == False:
                 # Create time-to-event estimates for entity
                 from Glb_GenTTE import GenTTE
-                gentte = GenTTE(params, Regcoeffs, Scenario_AgeCohort)
+                gentte = GenTTE(params, RegDict, Scntable['AgeCohort'])
                 gentte.ReadParam(entity)
-                gentte.MakeTTE(entity, Scenario_COO, Scenario_TestTiming)
+                gentte.MakeTTE(entity, Scenario_COO, TestTiming)
             from SysP_ClinicalPrescription import ClinicalPrescription
             prescription = ClinicalPrescription(entity.params)
             prescription.Process(entity)
@@ -186,7 +179,7 @@ for i in range(0, num_entities):
         if entity.stateNum == 3.0:
             from SysP_TxFirstLine import TxFirstLine
             txfirstline = TxFirstLine(entity.params)
-            txfirstline.Process(entity, Scenario_TestTiming)
+            txfirstline.Process(entity, TestTiming)
         
         #People who have been successfully treated undergo regular follow-up     
         if entity.stateNum == 4.0:
@@ -203,21 +196,21 @@ for i in range(0, num_entities):
         if entity.stateNum == 5.0:
             diag_secondline = Diagnosis(params)
             # In what order does diagnostic testing occur?
-            if Scenario_TestTiming == 'SecondLine':
+            if TestTiming == 'SecondLine':
                 if entity.uptake['GetsNGS'] == 'No':
                     # Entities that do not take up NGS tests get conventional test
                     diag_secondline.Screentest(entity, 1)
-                elif Scenario_NGStest == 0:
+                elif Scntable['NGSTest'] == 0:
                     # Only perform conventional testing on this entity
                     diag_secondline.Screentest(entity, 1)
-                elif Scenario_NGStest == 1:
+                elif Scntable['NGSTest'] == 1:
                     # Determine test sequence
-                    if Scenario_TestSequencing == 0:
+                    if Scntable['TestSequencing'] == 0:
                         diag_secondline.Screentest(entity, 2)
-                    elif Scenario_TestSequencing == 1:
+                    elif Scntable['TestSequencing'] == 1:
                         diag_secondline.Screentest(entity, 1)
                         diag_secondline.Screentest(entity, 2)
-                    elif Scenario_TestSequencing == 2:
+                    elif Scntable['TestSequencing'] == 2:
                         diag_secondline.Screentest(entity, 2)
                         diag_secondline.Screentest(entity, 1)
             else:
@@ -230,13 +223,13 @@ for i in range(0, num_entities):
         if entity.stateNum == 5.5:
             from SysP_CompanionDiagnostic import CompanionDiagnostic
             companion = CompanionDiagnostic(entity.params)
-            companion.Process(entity, Scenario_Companion, Scenario_COO)
+            companion.Process(entity, Scntable['Companion'], Scenario_COO)
         
         # An entity receiving second-line treatment
         if entity.stateNum == 6.0:
             from SysP_TxSecondLine import TxSecondLine
             txsecondline = TxSecondLine(entity.params)
-            txsecondline.Process(entity, Scenario_TestTiming)  
+            txsecondline.Process(entity, TestTiming)  
         
         # People receive palliative care at the end of their life
         if entity.stateNum == 7.0:
@@ -270,15 +263,15 @@ print("The sequencer simulated", num_entities, "entities. It took", looptime, "m
 ################################
 # OPTIONAL STEP - SAVE OUTPUTS TO DISK 
 
-numpy.save('EntityList', EntityList)
-numpy.save('ResourceList', ResourceList)
-numpy.save('EventsList', EventsList)
-numpy.save('QALYList', QALYList)
+#numpy.save('EntityList', EntityList)
+#numpy.save('ResourceList', ResourceList)
+#numpy.save('EventsList', EventsList)
+#numpy.save('QALYList', QALYList)
 
 ################################
 # STEP 3 - ESTIMATE COSTS AND SURVIVAL FOR SIMULATED COHORT
 from Glb_AnalyzeOutput import Analyze_Output
-output = Analyze_Output(estimates, CostDict)
+output = Analyze_Output(CostDict, Scntable['Disc_O'], Scntable['Disc_C'])
 
 # Estimate the costs generated by the entities in the population
 CohortCost = []
@@ -290,6 +283,34 @@ for i in range(len(EntityList)):
 CohortSurvival = np.array([output.EntitySurvival(x) for x in EntityList])
 CohortLYG = CohortSurvival[:,0]
 CohortQALY = CohortSurvival[:,1]
+CohortCEA = np.c_[CohortSurvival, np.array(CohortCost)]
+
+numpy.savetxt('CEA_Outputs.csv', testarray, delimiter=",")
+
+################################
+# STEP 4 - EXPORT PARAMETER VALUES FOR EVPPI
+
+# Import list of parameter values for each entity
+paramlist = [list(EntityList[0].params.keys())]
+paramlist[0].sort()
+for entity in EntityList:
+    sortvals = []
+    for name in paramlist[0]:
+        sortvals.append(entity.params[name])
+    paramlist.append(list(sortvals))
+    
+# Convert variable names, values to numpy array
+# This has to be done separately because numpy arrays can only contain one data type
+namearray = paramlist[0]
+del(paramlist[0])
+valsarray = np.array(paramlist)
+
+# Export names, values to .csv
+import csv
+with open('EVPPI_namearray.csv', 'w', newline='') as namelist:
+     w = csv.writer(namelist, quoting=csv.QUOTE_ALL)
+     w.writerow(namearray)
+numpy.savetxt('EVPPI_valsarray.csv', valsarray, delimiter=",")
 
 
 ####################################################
@@ -298,3 +319,4 @@ CohortQALY = CohortSurvival[:,1]
 #   1 - The clock moves forward an arbitrary number of days, but is reset to the next natural
 #       history or disease event by 'Glb_Checktime.py'. The purpose of moving the clock forward is
 #       simply to prompt advancement to the next event.
+

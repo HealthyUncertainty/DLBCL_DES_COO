@@ -4,7 +4,6 @@ Load parameter values from the Excel spreadsheet 'InputParameters'
 
 @author: icromwell
 """
-import pickle
 from Glb_Estimates import Estimates
 from Glb_Estimates import Estimate
 
@@ -12,6 +11,18 @@ class LoadParameters:
     def __init__(self, inbook):
         self._inbook = inbook
 
+    def getScenario(self):
+        sheet = self._inbook["Scenario"]
+        scenario = {}
+        for line in sheet.rows:
+            if line[0].value == 'Scenario':
+                # There's no estimate name in this row.
+                continue
+            name = line[0].value
+            val = line[2].value
+            scenario[name] = val
+        self.Scntable = scenario
+    
     # Import parameter estimates from the table
     def getEstimates(self):
         sheet = self._inbook["Inputs"]
@@ -27,8 +38,6 @@ class LoadParameters:
         
         del(estimates.Parameter)
         self.Ptable = estimates
-        with open('estimates.pickle', 'wb') as inputs:
-            pickle.dump(estimates, inputs, pickle.HIGHEST_PROTOCOL)
 
     # Import Regression Coefficients from the table
     def getRegcoeffs(self):
@@ -60,8 +69,6 @@ class LoadParameters:
                 config[param][group][factor][vartype] = {"mean": mean, "SE": SE}
         
         self.Regcoeffs = config
-        with open('regcoeffs.pickle', 'wb') as regcoeffs:
-            pickle.dump(config, regcoeffs, pickle.HIGHEST_PROTOCOL)
     
     # Import cost estimates from the table
     def getCostcoeffs(self):
@@ -86,8 +93,7 @@ class LoadParameters:
         del(CostDict['Parameter'])
         
         self.Costcoeffs = CostDict
-        with open('costcoeffs.pickle', 'wb') as costcoeffs:
-            pickle.dump(CostDict, costcoeffs, pickle.HIGHEST_PROTOCOL)
+
 
     # Import preferences from table
     def getPrefcoeffs(self):
@@ -118,8 +124,6 @@ class LoadParameters:
                 print("Parameter", param, "needs to have a 'TypeNo' of 1, 2, or a blank 'Value'. Check your input table.")
         
         self.Prefcoeffs = pconfig
-        with open('prefcoeffs.pickle', 'wb') as prefcoeffs:
-            pickle.dump(pconfig, prefcoeffs, pickle.HIGHEST_PROTOCOL)
     
     # Import test characteristics from table
     def getTestchars(self):
@@ -135,5 +139,3 @@ class LoadParameters:
             tcharsource[row][1] = str(tcharsource[row][1])
         
         self.Testchars = tcharsource
-        with open('testchars.pickle', 'wb') as testchars:
-            pickle.dump(tcharsource, testchars, pickle.HIGHEST_PROTOCOL)

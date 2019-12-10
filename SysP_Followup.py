@@ -46,7 +46,7 @@ class Followup:
             else:
                 entity.resources.append(("Follow-up - final", entity.allTime))
                 entity.events.append(("Entity's cancer is in remission", entity.allTime))
-                entity.utility.append((self._params['Util_Remission'], entity.allTime))
+                entity.utility.append(('Remission', self._params['Util_Remission'], entity.allTime))
 
                 entity.stateNum = 4.8  # Entity is in remission and receives no more care
                 entity.currentState = "Remission"

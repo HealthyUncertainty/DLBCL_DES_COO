@@ -22,11 +22,17 @@ import random
 
 
 class Analyze_Output:
-    def __init__(self, estimates, costdict):
-        self._estimates = estimates
+    def __init__(self, costdict, disc_o, disc_c):
         self._CostDict = costdict
+        self._Disc_O = disc_o
+        self._Disc_C = disc_c
 
     def CostEst(self, unit):
+        if unit in self._CostDict.keys():
+            pass
+        else:
+            print ("The 'Costs' sheet in 'InputParameters.xlsx' does not have an entry for: ", unit)
+        
         """A function to estimate the unit cost from a mean and standard error"""
         # Fee-for-service and other fixed-value resources have a unit cost equal to the mean
         if self._CostDict[unit][0] == 1:
@@ -42,7 +48,7 @@ class Analyze_Output:
             
         # Return an error if no variable type is specified
         else:
-            print("Please specify a variable TypeNo for", unit, "in the parameter table")
+            print("Please specify a variable TypeNo for", unit, "in InputParameters.xlsx")
             
         return samp_value
 
@@ -57,17 +63,16 @@ class Analyze_Output:
             if resourcelist[maxlen][1] > entity.natHist_deathAge:
                 del(resourcelist[maxlen])
         costList = []
-        for j in range(0, len(resourcelist)):
+        for name, time in resourcelist:
             if resourcelist == []:   # If no costs have been generated
                 costlist.append(0)
             else:
-                for i in range((len(resourcelist[j]))):
-                    unit = resourcelist[j][i]
-                    # Years elapsed for the discounting function
-                    year = float(resourcelist[j][1]/365)     
-                    # Apply a discount rate for future costs
-                    discRate_cost = 1 / (1 + self._CostDict['Discount'][1])**year              
-                    costList.append(self.CostEst(unit)*discRate_cost)
+                unit = name
+                # Years elapsed for the discounting function
+                year = float(time/365)     
+                # Apply a discount rate for future costs
+                discRate_cost = 1 / (1 + self._Disc_C)**year              
+                costList.append(self.CostEst(unit)*discRate_cost)
         return sum(costList)
     
     def EntitySurvival(self, entity):
@@ -85,7 +90,7 @@ class Analyze_Output:
             del(ent_util[0])
 
         # Define the daily discount rate
-        discountrate = self._estimates.DiscountRate.mean
+        discountrate = self._Disc_O
         disc_rate = 1 - (1 - discountrate)**(1 / 365)
         
         day = 0
