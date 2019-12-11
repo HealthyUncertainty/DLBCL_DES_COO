@@ -59,7 +59,7 @@ library(MCMCpack)
   
 ### STEP 3: Run BCEA function to produce CEPlanes, CEACs
   
-  n = nrow(Comparator)
+  n = nrow(CEA_Outputs)
   BCEA_DC <- cbind(Cost_A, Cost_B)
   BCEA_DE <- cbind(LYG_A, LYG_B)
   BCEA_DQ <- cbind(QALY_A, QALY_B)
