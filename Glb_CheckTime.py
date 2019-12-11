@@ -6,7 +6,7 @@ natural death, etc.) the appropriate changes are made to the entity's attributes
 
 @author: icromwell
 """
-def CheckTime(entity, estimates, natHist, QALY):
+def CheckTime(entity, estimates):
     
     "Update entity age"
     entity.age = entity.startAge + int(entity.allTime/365.25)
