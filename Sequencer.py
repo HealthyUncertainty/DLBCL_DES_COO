@@ -122,7 +122,7 @@ for i in range(0, num_entities):
                 
             ### Advance the clock to next scheduled event (Diagnosis, Treatment, Recurrence, Death) ###
             from Glb_CheckTime import CheckTime
-            CheckTime(entity, params)
+            CheckTime(entity, params, timehorizon)
             
             ### Run next scheduled event/process according to state ###
             
@@ -254,8 +254,7 @@ for i in range(0, num_entities):
         clones.append(entity)       
         # END WHILE
     EntityList.append(clones)
-l
-ooptime_end = time.time()
+looptime_end = time.time()
 looptime = round((looptime_end - looptime_start)/60, 2)
 print("The sequencer simulated", num_entities, "entities. It took", looptime, "minutes.")
 
@@ -295,6 +294,12 @@ for entity in EntityList:
         sortvals.append(entity.params[name])
     paramlist.append(list(sortvals))
     
+# Import list of preferences that correspond to the test characteristics
+for clone in EntityList:
+    # Clones have identical preferences, so we only need to pull data from one
+    entity = clone[0]
+    
+
 # Convert variable names, values to numpy array
 # This has to be done separately because numpy arrays can only contain one data type
 namearray = paramlist[0]

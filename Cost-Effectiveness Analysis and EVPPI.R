@@ -77,8 +77,8 @@ library(MCMCpack)
   
   # Read in the .csv files with parameter names and sampled values 
   EVPPI_Names  <- read.table("EVPPI_namearray.csv", sep=",", stringsAsFactors=FALSE,)
-  EVPPI_Values <- read.table("EVPPI_valsarray.csv", sep=",", stringsAsFactors=FALSE,)
-    colnames(Comparator) <- c("LY", "QALY", "Cost")
+  EVPPI_Params <- read.table("EVPPI_valsarray.csv", sep=",", stringsAsFactors=FALSE,)
+    colnames(EVPPI_Names) <- c("LY", "QALY", "Cost")
   
   
 EVPPI_paramvals <- cbind(rate_reduc_ABC, reduc_recur_ABC, c_GEP, c_GEP_recur,

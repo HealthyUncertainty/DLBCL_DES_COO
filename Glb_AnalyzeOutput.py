@@ -89,21 +89,20 @@ class Analyze_Output:
         while ent_util[1][0] == 0:
             del(ent_util[0])
 
-        # Define the daily discount rate
-        discountrate = self._Disc_O
-        disc_rate = 1 - (1 - discountrate)**(1 / 365)
+        # Define the discount rate
+        lmda = math.log(1 + self._Disc_O)
         
-        day = 0
         LYG = 0
         QALY = 0
         # For each row in the survival/utility list 'ent_util'
-        for h in (1,len(ent_util)-1):
+        for h in range(1,len(ent_util)-1):
             # The utility value is read from the second column
             Util = ent_util[h-1][1]
-            # Each day and quality-adjusted day is discounted at a daily rate
-            while day < ent_util[h][0]:
-                LYG += (1/365)*(1+disc_rate)**(-day)
-                QALY += (Util/365)*(1+disc_rate)**(-day)
-                day +=1
+            # For each survival period, discounted LYG = 1/-lmda*exp(-lmda*t1) - 1/-lmda*exp(-lmda*t0)
+            # Formula from Tappenden thesis
+            t1 = ent_util[h][0]/365
+            t0 = ent_util[h-1][0]/365
+            LYG += (1/-lmda)*math.exp(-lmda*t1) - (1/-lmda)*math.exp(-lmda*t0)
+            QALY += Util*((1/-lmda)*math.exp(-lmda*t1) - (1/-lmda)*math.exp(-lmda*t0))
         
         return [LYG, QALY]
