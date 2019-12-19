@@ -76,7 +76,7 @@ class Analyze_Output:
         return sum(costList)
     
     def EntitySurvival(self, entity):
-        """A function to calculate LYG and QALY for each entity"""
+        "A function to calculate LYG and QALY for each entity"
         # Load the entity's utility list from the model output
         ent_util = []
         for i in range(len(entity.utility)):
@@ -106,3 +106,26 @@ class Analyze_Output:
             QALY += Util*((1/-lmda)*math.exp(-lmda*t1) - (1/-lmda)*math.exp(-lmda*t0))
         
         return [LYG, QALY]
+
+    def EntityPrefences(self, entity, diagtest):
+        "A function to extract an entity's preferences for EVPPI"
+        preflist = entity.preferences
+        EVPPI_pref = {}
+        characteristics = []
+        
+        for topvals in diagtest.values():
+            characteristics.append([topvals['attribute'], topvals['level'], topvals['type']])
+        
+        for topkey, topval in preflist.items():
+            EVPPI_pref[topkey] = {}
+            for char in characteristics:
+                if topval['attribute'] in char:
+                    if char[2] == 1:
+                        EVPPI_pref[topkey] = topval[char[1]]['value']
+                    else:
+                        EVPPI_pref[topkey] = topval['value']
+        
+        # Remove empty values from preferences that don't correspond to a test characteristic
+        EVPPI_pref = dict([k,v] for k,v in EVPPI_pref.items() if v != {})
+        
+        return EVPPI_pref
