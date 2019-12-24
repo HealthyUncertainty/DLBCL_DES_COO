@@ -6,11 +6,11 @@ natural death, etc.) the appropriate changes are made to the entity's attributes
 
 @author: icromwell
 """
-def CheckTime(entity, estimates):
+def CheckTime(entity, estimates, timehorizon):
     
     "Update entity age"
     entity.age = entity.startAge + int(entity.allTime/365.25)
-    
+      
     "Check for natural death"
     if entity.allTime > entity.natHist_deathAge:
         entity.allTime = entity.natHist_deathAge
@@ -21,6 +21,15 @@ def CheckTime(entity, estimates):
         entity.death_desc = "Dead of Natural Causes"
         entity.stateNum = 100                               # The entity is dead
         entity.currentState = "Dead"
+
+    # Check for censoring
+    elif entity.allTime > timehorizon*365:
+        entity.allTime = timehorizon*365
+        entity.time_death = entity.allTime
+        entity.death_type = 3
+        entity.death_desc = "Censored"
+        entity.stateNum = 100
+        entity.currentState = "Censored"
     
     else:
         # Has entity been scheduled to die of disease?           

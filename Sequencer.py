@@ -122,7 +122,7 @@ for i in range(0, num_entities):
                 
             ### Advance the clock to next scheduled event (Diagnosis, Treatment, Recurrence, Death) ###
             from Glb_CheckTime import CheckTime
-            CheckTime(entity, params)
+            CheckTime(entity, params, timehorizon)
             
             ### Run next scheduled event/process according to state ###
             
@@ -254,8 +254,7 @@ for i in range(0, num_entities):
         clones.append(entity)       
         # END WHILE
     EntityList.append(clones)
-l
-ooptime_end = time.time()
+looptime_end = time.time()
 looptime = round((looptime_end - looptime_start)/60, 2)
 print("The sequencer simulated", num_entities, "entities. It took", looptime, "minutes.")
 
@@ -287,19 +286,41 @@ numpy.savetxt('CEA_Outputs.csv', CohortCEA, delimiter=",")
 # STEP 4 - EXPORT PARAMETER VALUES FOR EVPPI
 
 # Import list of parameter values for each entity
-paramlist = [list(EntityList[0].params.keys())]
-paramlist[0].sort()
-for entity in EntityList:
+paramlist = [list(EntityList[0][0].params.keys())]
+paramlist.sort()
+for clone in EntityList:
+    # Clones have identical parameter draws, so we only need to pull data from one
+    entity = clone[0]
     sortvals = []
     for name in paramlist[0]:
         sortvals.append(entity.params[name])
     paramlist.append(list(sortvals))
     
+# Import list of preferences that correspond to the test characteristics
+preflist = [list(EntityList[0][0].preferences.keys())]
+preflist.sort()
+for clone in EntityList:
+    # Clones have identical preferences, so we only need to pull data from one
+    entity = clone[0]
+    entpref = output.EntityPrefences(entity, diag_test)
+    sortvals = []
+    for name in preflist[0]:
+        # The test may have attributes that the entity/HCP doesn't have a preference about
+        if name in list(entpref.keys()):
+            sortvals.append(entpref[name])
+    preflist.append(list(sortvals))
+
 # Convert variable names, values to numpy array
 # This has to be done separately because numpy arrays can only contain one data type
-namearray = paramlist[0]
+namearray = paramlist[0] + preflist[0]
 del(paramlist[0])
-valsarray = np.array(paramlist)
+del(preflist[0])
+valslist = []
+for i in range(len(paramlist)):
+    vals = paramlist[i] + preflist[i]
+    valslist.append(vals)
+    
+param_valsarray = numpy.array(valslist)
 
 # Export names, values to .csv
 import csv
