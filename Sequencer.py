@@ -90,8 +90,6 @@ for i in range(0, num_entities):
     from Glb_ApplyInitClinical import ApplyInitClinical
     applyclin = ApplyInitClinical(params)
     applyclin.Process(entity)
-    # Just for debugging purposes
-    entity.COO = 'ABC'
         
     # Apply preference estimates to a newly-created entity
     from Glb_ApplyInitPreferences import ApplyInitPreferences
@@ -260,6 +258,18 @@ print("The sequencer simulated", num_entities, "entities. It took", looptime, "m
 
 ################################
 # OPTIONAL STEP - SAVE OUTPUTS TO DISK 
+CRtoF = []
+FtoD = []
+CRtoD = []
+for clone in EntityList:
+    entity = clone[0]
+    if hasattr(entity, 'TTE'):
+        CRtoF.append(entity.TTE['CRtoFail'])
+        CRtoD.append(entity.TTE['CRtoDeath'])
+        FtoD.append(entity.TTE['FailtoDeath'])
+
+TTE_out = numpy.c_[numpy.array(CRtoF), numpy.array(FtoD), numpy.array(CRtoD)]
+numpy.savetxt('TTE_Outputs.csv', TTE_out, delimiter=",")
 
 #numpy.save('EntityList', EntityList)
 

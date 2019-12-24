@@ -32,9 +32,9 @@ library(MCMCpack)
   QALY_A <- CEA_Outputs[,5]
   Cost_A <- CEA_Outputs[,6]
   
-  LYG_B  <- Comparator[,1]
-  QALY_B <- Comparator[,2]
-  Cost_B <- Comparator[,3]
+  LYG_B  <- CEA_Outputs[,1]
+  QALY_B <- CEA_Outputs[,2]
+  Cost_B <- CEA_Outputs[,3]
   
   DeltaE <- LYG_A - LYG_B
   DeltaQ <- QALY_A - QALY_B
